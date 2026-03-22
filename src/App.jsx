@@ -7,6 +7,7 @@ import Leaderboard from "./screens/Leaderboard";
 import Badges from "./screens/Badges";
 import Analytics from "./screens/Analytics";
 import Profile from "./screens/Profile";
+import './App.css'
 
 function App() {
   return (
