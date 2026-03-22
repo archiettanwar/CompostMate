@@ -1,101 +1,48 @@
-console.log("Gemini key loaded:", import.meta.env.VITE_GEMINI_API_KEY);
-
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
-const BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
+console.log("Groq key loaded:", import.meta.env.VITE_GROQ_API_KEY);
 
 const SYSTEM_PROMPT = `You are CompostBot, a friendly composting assistant inside CompostMate, 
 an app for urban Indian households. Keep answers under 100 words — short, 
 practical, encouraging. Always end with one single actionable tip. 
-Never use jargon without explaining it in brackets. Respond in Hindi 
-if user writes in Hindi, English otherwise. Never break character.`;
-
-const VISION_PROMPT = `Analyze this compost image and return ONLY valid JSON with fields:
-isCompost (boolean), moistureStatus (too_dry|ideal|too_wet|unknown),
-problems (array of strings), recommendation (string), confidence (high|medium|low)`;
+Never use jargon without explaining it in brackets. Always respond in English only, regardless of what language the user writes in. Never break character.`;
 
 /**
- * Sends a chat message to Gemini and returns the text reply.
+ * Sends a chat message to Groq Cloud and returns the text reply.
  * @param {string} userMessage 
  * @returns {Promise<string>}
  */
 export const sendChatMessage = async (userMessage) => {
+  const API_KEY = import.meta.env.VITE_GROQ_API_KEY;
   try {
-    const url = `${BASE_URL}?key=${API_KEY}`;
-    const response = await fetch(url, {
+    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
+        "Authorization": `Bearer ${API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        contents: [
-          {
-            parts: [{ text: userMessage }],
-          },
+        model: "llama-3.1-8b-instant",
+        messages: [
+          { role: "system", content: SYSTEM_PROMPT },
+          { role: "user", content: userMessage }
         ],
-        systemInstruction: {
-          parts: [{ text: SYSTEM_PROMPT }],
-        },
+        max_tokens: 150
       }),
     });
 
     if (!response.ok) {
-      throw new Error(`Gemini API Error: ${response.statusText}`);
+      throw new Error(`Groq API Error: ${response.statusText}`);
     }
 
     const data = await response.json();
-    return data.candidates[0].content.parts[0].text;
+    return data.choices[0].message.content;
   } catch (error) {
     console.error("Error in sendChatMessage:", error);
     throw error;
   }
 };
 
-/**
- * Analyzes a compost image and returns a JSON object.
- * @param {string} base64ImageData - Base64 encoded image data (without prefix)
- * @returns {Promise<Object>}
- */
+// Placeholder for visual analysis (to be updated for Groq/other vision providers)
 export const analyzeCompostImage = async (base64ImageData) => {
-  try {
-    const url = `${BASE_URL}?key=${API_KEY}`;
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        contents: [
-          {
-            parts: [
-              { text: VISION_PROMPT },
-              {
-                inline_data: {
-                  mime_type: "image/jpeg",
-                  data: base64ImageData,
-                },
-              },
-            ],
-          },
-        ],
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Gemini API Error: ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    const textResponse = data.candidates[0].content.parts[0].text;
-    
-    // Attempt to parse JSON from the text (Gemini sometimes wraps JSON in code blocks)
-    const jsonMatch = textResponse.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      return JSON.parse(jsonMatch[0]);
-    }
-    
-    return JSON.parse(textResponse);
-  } catch (error) {
-    console.error("Error in analyzeCompostImage:", error);
-    throw error;
-  }
+  console.warn("Vision analysis is currently disabled during Groq transition.");
+  return null;
 };
