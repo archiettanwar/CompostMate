@@ -4,13 +4,13 @@ import { getFirestore } from "firebase/firestore";
 import { getMessaging } from "firebase/messaging";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCCT0a1lrIwZLf3NjqaGm4fhsI0sNFi4G8",
-  authDomain: "compostmate-fa8da.firebaseapp.com",
-  projectId: "compostmate-fa8da",
-  storageBucket: "compostmate-fa8da.firebasestorage.app",
-  messagingSenderId: "769858490112",
-  appId: "1:769858490112:web:64893815d6a5f41a00ade5",
-  measurementId: "G-K313DK1V2J"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
 };
 
 const app = initializeApp(firebaseConfig);
