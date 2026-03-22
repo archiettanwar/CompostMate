@@ -31,21 +31,18 @@ const Sidebar = () => {
 
   const navItems = [
     { id: 'home', label: 'Home', icon: '🏠', path: '/dashboard' },
+    { id: 'tracker', label: 'Tracker', icon: '⏳', path: '/tracker' },
     { id: 'log', label: 'Log Waste', icon: '📝', path: '/log' },
     { id: 'leaderboard', label: 'Leaderboard', icon: '🏆', path: '/leaderboard' },
     { id: 'badges', label: 'Badges', icon: '⭐', path: '/badges' },
+    { id: 'learn', label: 'Learn', icon: '📚', path: '/learn' },
     { id: 'analytics', label: 'Analytics', icon: '📊', path: '/analytics' },
-    { id: 'profile', label: 'Profile', icon: '👤', path: '/profile' },
+    { id: 'tools', label: 'Tools', icon: '🛠️', path: '/tools' },
+    // Role-specific links
+    ...(userData?.role === 'resident' ? [{ id: 'perks', label: 'My Perks', icon: '🎁', path: '/perks' }] : []),
+    ...(userData?.role === 'society_admin' || userData?.role === 'super_admin' ? [{ id: 'admin', label: 'Admin Panel', icon: '🔐', path: '/admin' }] : []),
+    ...(userData?.societyId ? [{ id: 'my-society', label: 'My Building', icon: '🏢', path: '/my-society' }] : [{ id: 'join', label: 'Join Society', icon: '🏢', path: '/join-society' }]),
   ];
-
-  const handleLogout = async () => {
-    try {
-      await signOut(auth);
-      navigate("/");
-    } catch (error) {
-      console.error("Logout Error:", error);
-    }
-  };
 
   return (
     <div className="fixed left-0 top-0 h-screen w-64 border-r border-gray-100 shadow-2xl z-50 transition-all duration-300" style={{ backgroundColor: '#1A5C38' }}>
@@ -80,33 +77,25 @@ const Sidebar = () => {
         </nav>
 
         {/* User Profile at Bottom */}
-        <div className="p-4 m-4 bg-white/10 rounded-3xl border border-white/10 backdrop-blur-sm">
+        <div className="p-4 m-4 bg-white/10 rounded-3xl border border-white/10 backdrop-blur-sm cursor-pointer hover:bg-white/20 transition-all" onClick={() => navigate('/profile')}>
           <div className="flex items-center gap-4">
             {/* Avatar Circle */}
-            <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center text-[#1A5C38] font-black shadow-md shadow-black/20 text-xl overflow-hidden border-2 border-white/20 shrink-0">
-              {(user?.displayName || userData?.name || user?.email || "C")[0].toUpperCase()}
+            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black shadow-md shadow-black/20 text-xl overflow-hidden border-2 border-white/20 shrink-0 ${
+              userData?.photoURL || user?.photoURL ? 'bg-white' : 'bg-[#1A5C38] text-white'
+            }`}>
+              {userData?.photoURL || user?.photoURL ? (
+                <img src={userData?.photoURL || user?.photoURL} alt="DP" className="w-full h-full object-cover" />
+              ) : (
+                (userData?.name || user?.displayName || user?.email || "C")[0].toUpperCase()
+              )}
             </div>
             
             {/* User Info */}
-            <div className="flex-1 min-w-0">
-              <p className="text-white font-black text-sm truncate tracking-tight">
-                {userData?.name || user?.displayName || "Composter"}
-              </p>
-              <p className="text-white/60 text-[10px] truncate font-bold uppercase tracking-wider">
-                {user?.email}
+            <div className="flex-1 min-w-0 flex items-center">
+              <p className="text-white font-black text-base truncate tracking-tight">
+                {(userData?.name || user?.displayName || "Composter").split(' ')[0]}
               </p>
             </div>
-
-            {/* Logout Button */}
-            <button 
-              onClick={handleLogout}
-              title="Logout"
-              className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-all cursor-pointer group shrink-0"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5 group-hover:translate-x-0.5 transition-transform">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
-              </svg>
-            </button>
           </div>
         </div>
       </div>

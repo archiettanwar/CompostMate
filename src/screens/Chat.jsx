@@ -4,6 +4,7 @@ import { auth, db } from "../lib/firebase";
 import { doc, getDoc } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import { sendChatMessage } from "../lib/gemini.js";
+import Sidebar from "../components/Sidebar";
 
 const Chat = () => {
   const [messages, setMessages] = useState([
@@ -17,42 +18,21 @@ const Chat = () => {
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef(null);
   
-  // Sidebar & User State
-  const [activeNav, setActiveNav] = useState('bot');
   const [user, setUser] = useState(null);
-  const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       if (!firebaseUser) {
         navigate("/");
         return;
       }
       setUser(firebaseUser);
-      try {
-        const docSnap = await getDoc(doc(db, "users", firebaseUser.uid));
-        if (docSnap.exists()) {
-          setUserData(docSnap.data());
-        }
-      } catch (error) {
-        console.error("Error fetching user data:", error);
-      }
       setLoading(false);
     });
     return () => unsubscribe();
   }, [navigate]);
-
-  const navItems = [
-    { id: 'home', label: 'Home', icon: '🏠', path: '/dashboard' },
-    { id: 'log', label: 'Log Waste', icon: '📝', path: '/logger' },
-    { id: 'bot', label: 'CompostBot', icon: '💬', path: '/chat' },
-    { id: 'leaderboard', label: 'Leaderboard', icon: '🏆', path: '/leaderboard' },
-    { id: 'badges', label: 'Badges', icon: '⭐', path: '/badges' },
-    { id: 'analytics', label: 'Analytics', icon: '📊', path: '/analytics' },
-    { id: 'profile', label: 'Profile', icon: '👤', path: '/profile' },
-  ];
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -107,57 +87,8 @@ const Chat = () => {
   }
 
   return (
-    <div className="flex min-h-screen bg-[#F9FBF9] font-sans">
-      {/* Sidebar (Exact same as Dashboard.jsx) */}
-      <div className="fixed left-0 top-0 h-screen w-64 border-r border-gray-100 shadow-2xl z-50 transition-all duration-300" style={{ backgroundColor: '#1A5C38' }}>
-        <div className="flex flex-col h-full">
-          {/* Logo */}
-          <div className="px-8 py-10">
-            <div className="flex items-center gap-3">
-              <span className="text-3xl filter drop-shadow-md">🌱</span>
-              <h1 className="text-2xl font-black text-white tracking-tighter">CompostMate</h1>
-            </div>
-          </div>
-
-          {/* Navigation */}
-          <nav className="flex-1 px-4 space-y-1.5 overflow-y-auto custom-scrollbar">
-            {navItems.map((item) => (
-              <button
-                key={item.id}
-                onClick={() => {
-                  setActiveNav(item.id);
-                  if (item.path) navigate(item.path);
-                }}
-                className={`w-full flex items-center gap-4 px-5 py-3.5 rounded-2xl transition-all duration-200 group ${
-                  activeNav === item.id || (item.id === 'bot' && window.location.pathname === '/chat')
-                    ? 'bg-white text-[#1A5C38] shadow-lg shadow-black/10 scale-[1.02]'
-                    : 'text-white/80 hover:bg-white/10 hover:text-white'
-                }`}
-              >
-                <span className={`text-xl transition-transform duration-300 ${activeNav === item.id ? 'scale-110' : 'group-hover:scale-110'}`}>{item.icon}</span>
-                <span className="font-bold text-sm tracking-wide">{item.label}</span>
-              </button>
-            ))}
-          </nav>
-
-          {/* User Profile at Bottom */}
-          <div className="p-4 m-4 bg-white/10 rounded-3xl border border-white/10 backdrop-blur-sm">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center text-[#1A5C38] font-black shadow-md shadow-black/20 text-xl overflow-hidden border-2 border-white/20">
-                {(user?.displayName || userData?.name || "C")[0].toUpperCase()}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-white font-black text-sm truncate tracking-tight">
-                  {user?.displayName || userData?.name || "Composter"}
-                </p>
-                <p className="text-white/60 text-[10px] truncate font-bold uppercase tracking-wider">
-                  {user?.email}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+    <div className="flex min-h-screen bg-[#F9FBF9] font-sans text-gray-900">
+      <Sidebar />
 
       {/* Main Chat Content Area */}
       <div className="ml-64 flex-1 flex flex-col h-screen relative">

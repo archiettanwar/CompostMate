@@ -5,12 +5,19 @@ import { doc, getDoc } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import { sendChatMessage } from "../lib/gemini.js";
 import Sidebar from "../components/Sidebar";
+import { articles } from "../data/articles";
 
 export default function Dashboard() {
   const [user, setUser] = useState(null);
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [readArticles, setReadArticles] = useState([]);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const saved = JSON.parse(localStorage.getItem('readArticles') || '[]');
+    setReadArticles(saved);
+  }, []);
 
   // Chat Widget State
   const [isChatOpen, setIsChatOpen] = useState(false);
@@ -131,6 +138,30 @@ export default function Dashboard() {
              </div>
           </div>
         </div>
+
+        {/* Join Society Banner */}
+        {userData?.societyId === null && (
+          <div className="mb-10 p-8 bg-gradient-to-r from-[#1A5C38] to-[#2E8B57] rounded-[40px] shadow-2xl shadow-green-900/10 flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden group animate-in slide-in-from-right-4 duration-1000">
+            {/* Background pattern */}
+            <div className="absolute top-0 right-0 p-10 opacity-10 pointer-events-none group-hover:scale-110 transition-transform duration-700">
+                <span className="text-9xl">🏢</span>
+            </div>
+            
+            <div className="relative z-10 text-center md:text-left">
+              <h2 className="text-xl font-black text-white tracking-tight mb-2 uppercase">Unlock Society Features 🏢</h2>
+              <p className="text-green-50 text-xs font-bold uppercase tracking-widest leading-relaxed max-w-lg">
+                You haven't joined a society yet. Join now to unlock building leaderboard 🏆 and maintenance discounts! 💰
+              </p>
+            </div>
+            
+            <button 
+              onClick={() => navigate('/join-society')}
+              className="relative z-10 px-8 py-4 bg-white text-[#1A5C38] rounded-2xl font-black text-[10px] uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-xl shadow-black/10 cursor-pointer"
+            >
+              Join Your Society 🚀
+            </button>
+          </div>
+        )}
 
         {/* Stats Row */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-10">
@@ -256,6 +287,76 @@ export default function Dashboard() {
                 <p className="text-6xl font-black text-gray-200 tracking-tighter mb-4">—</p>
                 <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest max-w-[140px] leading-relaxed">Insufficient data for ratio projection</p>
               </div>
+            </div>
+
+            {/* Keep Learning Widget */}
+            <div className="bg-white rounded-3xl shadow-xl shadow-black/5 p-8 border border-gray-50 relative overflow-hidden">
+               <h2 className="text-lg font-black text-gray-900 tracking-tight mb-6 uppercase text-xs tracking-[0.2em] text-gray-400">📚 Keep Learning</h2>
+               <div className="space-y-4">
+                 {articles.filter(a => !readArticles.includes(a.id)).slice(0, 2).length > 0 ? (
+                   articles.filter(a => !readArticles.includes(a.id)).slice(0, 2).map((article) => (
+                     <div key={article.id} className="p-4 bg-gray-50 rounded-2xl border border-gray-100 group hover:border-[#1A5C38]/20 transition-all">
+                       <p className="text-[10px] font-black text-[#F4A300] uppercase tracking-widest mb-1">{article.topic}</p>
+                       <h4 className="text-xs font-black text-gray-900 leading-tight mb-2 group-hover:text-[#1A5C38] transition-colors">{article.title}</h4>
+                       <button 
+                         onClick={() => navigate('/learn')} 
+                         className="text-[10px] font-black text-[#1A5C38] uppercase tracking-widest hover:underline cursor-pointer"
+                       >
+                         Read →
+                       </button>
+                     </div>
+                   ))
+                 ) : (
+                   <div className="py-6 text-center">
+                     <p className="text-xs font-black text-gray-400 uppercase tracking-widest">🎉 You've read all articles!</p>
+                     <p className="text-[8px] text-gray-300 uppercase mt-1">Check back soon for more guides.</p>
+                   </div>
+                 )}
+               </div>
+            </div>
+
+            {/* TOOLS & ACCESSORIES WIDGET */}
+            <div className="bg-white rounded-3xl p-8 border border-gray-100 shadow-xl shadow-black/5 mb-8">
+              <div className="flex items-center justify-between mb-8">
+                <div>
+                  <h3 className="text-xl font-black text-gray-900 tracking-tight">🛠️ Tools</h3>
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Curated Selection</p>
+                </div>
+                <button 
+                  onClick={() => navigate("/tools")}
+                  className="text-[#1A5C38] font-black text-xs uppercase tracking-widest hover:translate-x-1 transition-all"
+                >
+                  All →
+                </button>
+              </div>
+              <div className="space-y-4 mb-6">
+                {[
+                  {
+                    name: "20L Bin",
+                    price: "₹800+",
+                    image: "/assets/tools/bin_20l.jpg",
+                  },
+                  {
+                    name: "Aerator",
+                    price: "₹400+",
+                    image: "/assets/tools/aerator.jpg",
+                  }
+                ].map((item, i) => (
+                  <div key={i} className="flex gap-4 p-4 rounded-2xl hover:bg-gray-50 transition-all border border-transparent hover:border-gray-100 group cursor-pointer" onClick={() => navigate("/tools")}>
+                    <img src={item.image} alt={item.name} className="w-12 h-12 rounded-xl object-cover" />
+                    <div className="flex-1">
+                      <h4 className="font-bold text-xs text-gray-900">{item.name}</h4>
+                      <p className="text-[#1A5C38] font-black text-[10px]">{item.price}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <button 
+                onClick={() => navigate("/tools")}
+                className="w-full py-4 bg-[#1A5C38] text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-green-900/10 hover:bg-[#144a2d] transition-all"
+              >
+                Browse All Tools
+              </button>
             </div>
 
              <div className="bg-gradient-to-br from-[#1A5C38] to-[#2E8B57] rounded-3xl shadow-xl shadow-[#1A5C38]/20 p-8 text-white">

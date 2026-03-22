@@ -6,12 +6,13 @@ import {
   GoogleAuthProvider, 
   signInWithPopup 
 } from "firebase/auth";
-import { doc, setDoc } from "firebase/firestore";
-import { auth, db } from "../lib/firebase.js";
+import { doc, setDoc, getDoc } from "firebase/firestore";
+import { auth, db, getUserRole } from "../lib/firebase.js";
 
 const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [username, setUsername] = useState("");
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -24,26 +25,40 @@ const Auth = () => {
     setError("");
 
     try {
+      let user;
       if (isLogin) {
-        await signInWithEmailAndPassword(auth, email, password);
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        user = userCredential.user;
       } else {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        const user = userCredential.user;
+        user = userCredential.user;
 
-        // Initialize Firestore user document
+        // Initialize Firestore user document with new schema
         await setDoc(doc(db, "users", user.uid), {
           uid: user.uid,
           email: user.email,
-          name: user.email.split("@")[0],
+          name: username.trim() || user.email.split("@")[0],
+          profilePic: "",
           xp: 0,
           level: 1,
           streak: 0,
           badges: [],
+          role: "resident",
+          societyId: null,
+          flatNumber: "",
+          discount: 0,
+          discountNote: "",
           onboarded: false,
           createdAt: new Date().toISOString()
         });
       }
-      navigate("/dashboard");
+
+      // Role-based redirection
+      const role = await getUserRole(user.uid);
+      if (role === "society_admin") navigate("/admin");
+      else if (role === "super_admin") navigate("/superadmin");
+      else navigate("/dashboard");
+      
     } catch (err) {
       console.error("Auth Error:", err);
       setError(err.message.replace("Firebase: ", ""));
@@ -61,20 +76,37 @@ const Auth = () => {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
 
-      // Initialize/Update Firestore user document
-      await setDoc(doc(db, "users", user.uid), {
-        uid: user.uid,
-        email: user.email,
-        name: user.displayName || user.email.split("@")[0],
-        xp: 0,
-        level: 1,
-        streak: 0,
-        badges: [],
-        onboarded: false,
-        createdAt: new Date().toISOString()
-      }, { merge: true });
+      // Check if user already exists
+      const userRef = doc(db, "users", user.uid);
+      const userSnap = await getDoc(userRef);
 
-      navigate("/dashboard");
+      if (!userSnap.exists()) {
+        // Initialize Firestore user document with default role ONLY for new users
+        await setDoc(userRef, {
+          uid: user.uid,
+          email: user.email,
+          name: user.displayName || user.email.split("@")[0],
+          profilePic: user.photoURL || "",
+          xp: 0,
+          level: 1,
+          streak: 0,
+          badges: [],
+          role: "resident",
+          societyId: null,
+          flatNumber: "",
+          discount: 0,
+          discountNote: "",
+          onboarded: false,
+          createdAt: new Date().toISOString()
+        });
+      }
+
+      // Role-based redirection
+      const role = await getUserRole(user.uid);
+      if (role === "society_admin") navigate("/admin");
+      else if (role === "super_admin") navigate("/superadmin");
+      else navigate("/dashboard");
+
     } catch (err) {
       console.error("Google Auth Error:", err);
       setError(err.message.replace("Firebase: ", ""));
@@ -131,6 +163,27 @@ const Auth = () => {
 
           {/* Form */}
           <form onSubmit={handleEmailAuth} className="space-y-5">
+            {!isLogin && (
+              <div>
+                <label className="block text-[10px] font-bold text-gray-400 mb-2 uppercase tracking-widest ml-1">
+                  Full Name / Username
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. EcoWarrior"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  onFocus={() => setFocusedField('username')}
+                  onBlur={() => setFocusedField(null)}
+                  className={`w-full bg-[#F9FBF9] border rounded-xl px-4 py-3.5 text-sm text-gray-800 placeholder-gray-400 transition-all duration-200 focus:outline-none ${
+                    focusedField === 'username' ? 'border-[#1A5C38] ring-4 ring-[#1A5C38]/10 shadow-sm' : 'border-gray-200'
+                  }`}
+                  required={!isLogin}
+                  disabled={loading}
+                />
+              </div>
+            )}
+
             <div>
               <label className="block text-[10px] font-bold text-gray-400 mb-2 uppercase tracking-widest ml-1">
                 Email Address
