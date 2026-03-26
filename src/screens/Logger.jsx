@@ -16,9 +16,9 @@ const Tooltip = ({ text }) => {
       onMouseEnter={() => setVisible(true)}
       onMouseLeave={() => setVisible(false)}
     >
-      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-[#1A5C38]/10 text-[#1A5C38] text-[10px] font-bold">?</span>
+      <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-white/10 text-white/40 text-[9px] font-bold border border-white/10">?</span>
       {visible && (
-        <div className="absolute z-50 left-6 top-0 w-64 bg-white border border-gray-100 rounded-2xl shadow-2xl p-4 text-[11px] text-gray-500 font-bold leading-relaxed animate-in fade-in zoom-in duration-200">
+        <div className="absolute z-50 left-6 top-0 w-64 bg-[#1a1a1a] border border-white/10 rounded-xl shadow-2xl p-4 text-[11px] text-gray-400 font-medium leading-relaxed animate-in fade-in zoom-in duration-200">
           {text}
         </div>
       )}
@@ -47,7 +47,7 @@ const Logger = () => {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       if (!firebaseUser) {
-        navigate("/");
+        navigate("/auth");
         return;
       }
       setUser(firebaseUser);
@@ -108,7 +108,7 @@ const Logger = () => {
       });
       
       showToast(`Success! Logged ${totalWeight.toFixed(1)}kg and earned ${xpEarned} XP! ✨`);
-      navigate('/tracker'); // Redirect to tracker instead of profile to see the new batch
+      navigate('/tracker'); 
     } catch (err) {
       console.error("Logging failed:", err);
       showToast("Error logging waste. Please try again.", "error");
@@ -122,48 +122,55 @@ const Logger = () => {
   const feedback = getCNFeedback(cnRatio);
 
   return (
-    <div className="min-h-screen bg-[#F9FBF9] pb-20">
+    <div className="min-h-screen" style={{ backgroundColor: '#0a0a0a' }}>
       <Sidebar />
       <div className="ml-64 p-10 min-h-screen max-w-5xl mx-auto">
         <div className="mb-12">
-          <h1 className="text-[32px] font-black text-[#1A5C38] tracking-tighter uppercase">Log Your Impact</h1>
-          <p className="text-gray-400 font-bold mt-2 uppercase text-xs tracking-[0.2em]">Snap a photo to verify your waste and earn rewards</p>
+          <h1 className="text-3xl font-bold text-white tracking-tight">Log Your Impact 🚀</h1>
+          <p className="mt-2 text-xs font-semibold uppercase tracking-widest leading-relaxed" style={{ color: '#6b7280' }}>
+            Snap a photo to verify your waste and earn rewards
+          </p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
           {/* Left: AI & Upload */}
           <div className="space-y-8">
-            <div className={`relative p-8 rounded-[40px] border-4 border-dashed transition-all duration-500 flex flex-col items-center justify-center min-h-[400px] overflow-hidden ${
-              image ? 'border-transparent bg-white shadow-2xl' : 'border-gray-200 bg-gray-50/50 hover:bg-gray-50 hover:border-[#1A5C38]/30'
-            }`}>
+            <div className={`relative p-8 rounded-2xl border-2 border-dashed transition-all duration-500 flex flex-col items-center justify-center min-h-[400px] overflow-hidden ${
+              image ? 'border-transparent' : 'border-white/10 bg-white/5 hover:bg-white/10 hover:border-[#22c55e]/30'
+            }`}
+            style={image ? { backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' } : {}}
+            >
               {image ? (
                 <>
                   <img src={image} alt="Waste Proof" className="absolute inset-0 w-full h-full object-cover opacity-20 blur-sm" />
                   <div className="relative z-10 w-full h-full flex flex-col items-center">
-                    <div className="w-48 h-48 rounded-[32px] overflow-hidden border-4 border-white shadow-2xl mb-6 scale-in">
+                    <div className="w-48 h-48 rounded-2xl overflow-hidden border-4 border-white/10 shadow-2xl mb-6 transform transition-transform hover:scale-105">
                       <img src={image} alt="Preview" className="w-full h-full object-cover" />
                     </div>
                     
                     {analyzing ? (
                       <div className="flex flex-col items-center gap-3">
-                        <div className="w-6 h-6 border-4 border-[#1A5C38]/20 border-t-[#1A5C38] rounded-full animate-spin"></div>
-                        <p className="text-[#1A5C38] font-black text-xs uppercase tracking-widest">Analyzing Proof...</p>
+                        <div className="w-6 h-6 border-4 border-[#22c55e]/20 border-t-[#22c55e] rounded-full animate-spin"></div>
+                        <p className="font-bold text-[10px] uppercase tracking-widest" style={{ color: '#22c55e' }}>Analyzing Proof...</p>
                       </div>
                     ) : analysisResult ? (
                       <div className="text-center animate-in fade-in zoom-in duration-500">
-                        <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full font-black text-[10px] uppercase tracking-widest mb-4 ${
-                          analysisResult.verified ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                        }`}>
+                        <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full font-bold text-[10px] uppercase tracking-widest mb-4 ${
+                          analysisResult.verified ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'
+                        }`}
+                        style={{ border: analysisResult.verified ? '1px solid rgba(34,197,94,0.2)' : '1px solid rgba(239,68,68,0.2)' }}
+                        >
                           {analysisResult.verified ? '✅ Verified Compostable' : '❌ Not Compostable'}
                         </div>
-                        <p className="text-gray-900 font-black text-xl tracking-tight mb-1">{analysisResult.description}</p>
-                        <p className="text-[#1A5C38] font-bold text-xs uppercase tracking-widest">Est. {analysisResult.weightEstimate} KG • {analysisResult.category}</p>
+                        <p className="text-white font-bold text-xl tracking-tight mb-1">{analysisResult.description}</p>
+                        <p className="font-semibold text-xs uppercase tracking-widest" style={{ color: '#22c55e' }}>Est. {analysisResult.weightEstimate} KG • {analysisResult.category}</p>
                       </div>
                     ) : null}
 
                     <button 
                       onClick={() => {setImage(null); setAnalysisResult(null); setGreens(0); setBrowns(0);}}
-                      className="mt-8 text-gray-400 font-black text-[10px] uppercase tracking-widest hover:text-red-500 transition-colors"
+                      className="mt-8 font-bold text-[10px] uppercase tracking-widest transition-colors cursor-pointer"
+                      style={{ color: '#ef4444' }}
                     >
                       Remove Photo
                     </button>
@@ -171,100 +178,110 @@ const Logger = () => {
                 </>
               ) : (
                 <label className="cursor-pointer flex flex-col items-center group">
-                  <div className="w-20 h-20 rounded-full bg-white shadow-xl flex items-center justify-center text-3xl mb-4 group-hover:scale-110 transition-transform">📸</div>
-                  <span className="text-gray-900 font-black text-lg tracking-tight">Snap Bio-Waste</span>
-                  <span className="text-gray-400 font-bold text-xs uppercase tracking-widest mt-1">Upload proof for 2x XP</span>
+                  <div className="w-20 h-20 rounded-full bg-white/5 border border-white/10 shadow-xl flex items-center justify-center text-3xl mb-4 group-hover:scale-110 transition-transform group-hover:bg-[#22c55e]/10 group-hover:border-[#22c55e]/30">📸</div>
+                  <span className="text-white font-bold text-lg tracking-tight">Snap Bio-Waste</span>
+                  <span className="font-semibold text-[10px] uppercase tracking-widest mt-1" style={{ color: '#6b7280' }}>Upload proof for 2x XP</span>
                   <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
                 </label>
               )}
             </div>
 
             {/* Smart Feedback */}
-            <div className="bg-[#1A5C38] p-8 rounded-[40px] text-white shadow-2xl shadow-[#1A5C38]/20 relative overflow-hidden">
+            <div className="p-8 rounded-2xl text-white relative overflow-hidden" style={{ background: 'linear-gradient(135deg, rgba(34,197,94,0.15) 0%, rgba(22,163,74,0.08) 100%)', border: '1px solid rgba(34,197,94,0.2)' }}>
               <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
-                <span className="text-8xl">🌱</span>
+                <span className="text-7xl">🌱</span>
               </div>
-              <p className="text-[10px] font-black uppercase tracking-[0.2em] mb-4 opacity-60">C:N Science</p>
-              <h3 className="text-2xl font-black tracking-tight mb-2">Ratio: {cnRatio !== null ? cnRatio.toFixed(1) : "N/A"}</h3>
-              <p className="text-sm font-bold opacity-80 leading-relaxed mb-6">{feedback}</p>
-              <div className="inline-flex px-4 py-2 bg-white/10 rounded-full text-[10px] font-black uppercase tracking-widest">
-                Status: {maturity}
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] mb-4" style={{ color: '#22c55e' }}>C:N Science</p>
+              <h3 className="text-2xl font-bold tracking-tight mb-2">Ratio: {cnRatio !== null ? cnRatio.toFixed(1) : "N/A"}</h3>
+              <p className="text-sm font-medium leading-relaxed mb-6" style={{ color: '#9ca3af' }}>{feedback}</p>
+              <div className="inline-flex px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest" style={{ backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
+                Status: <span className="ml-1" style={{ color: '#22c55e' }}>{maturity}</span>
               </div>
             </div>
           </div>
 
           {/* Right: Adjustments & Submit */}
-          <div className="bg-white p-10 rounded-[40px] border border-gray-100 shadow-xl shadow-black/5 flex flex-col h-full">
-            <h2 className="text-2xl font-black text-gray-900 tracking-tight mb-8">Verification & Weights</h2>
+          <div className="p-10 rounded-2xl flex flex-col h-full" style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+            <h2 className="text-xl font-bold text-white tracking-tight mb-8 uppercase text-xs tracking-widest" style={{ color: '#6b7280' }}>Verification & Weights</h2>
             
             <div className="space-y-10 flex-1">
               {/* Batch Name Input */}
               <div>
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">Custom Batch Name</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest mb-3" style={{ color: '#4b5563' }}>Custom Batch Name</p>
                 <input 
                   type="text"
                   placeholder="e.g. Kitchen Scraps #1"
                   value={batchName}
                   onChange={(e) => setBatchName(e.target.value)}
-                  className="w-full px-6 py-4 bg-gray-50 border border-transparent focus:border-[#1A5C38] focus:bg-white rounded-2xl font-bold text-gray-900 outline-none transition-all"
+                  className="w-full px-6 py-4 rounded-xl font-bold text-white outline-none transition-all"
+                  style={{ backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)' }}
                 />
               </div>
 
               {/* Greens */}
               <div>
                 <div className="flex items-center justify-between mb-4">
-                  <p className="text-gray-900 font-black text-sm uppercase tracking-tight flex items-center gap-2">
+                  <p className="text-white font-bold text-xs uppercase tracking-widest flex items-center gap-2">
                     🥦 Greens <Tooltip text="Nitrogen-rich scraps like fruit peels, veg waste, coffee grounds." />
                   </p>
-                  <span className="text-[#1A5C38] font-black text-lg">{greens.toFixed(1)} kg</span>
+                  <span className="font-bold text-lg" style={{ color: '#22c55e' }}>{greens.toFixed(1)} kg</span>
                 </div>
                 <input
                   type="range" min="0" max="20" step="0.1"
                   value={greens}
                   onChange={(e) => setGreens(Number(e.target.value))}
-                  className="w-full h-2 rounded-lg appearance-none cursor-pointer bg-gray-100"
-                  style={{ accentColor: '#1A5C38' }}
+                  className="w-full h-2 rounded-lg appearance-none cursor-pointer"
+                  style={{ backgroundColor: 'rgba(255,255,255,0.1)', accentColor: '#22c55e' }}
                 />
               </div>
 
               {/* Browns */}
               <div>
                 <div className="flex items-center justify-between mb-4">
-                  <p className="text-gray-900 font-black text-sm uppercase tracking-tight flex items-center gap-2">
+                  <p className="text-white font-bold text-xs uppercase tracking-widest flex items-center gap-2">
                     🍂 Browns <Tooltip text="Carbon-rich scraps like dry leaves, twigs, cardboard." />
                   </p>
-                  <span className="text-[#8B4513] font-black text-lg">{browns.toFixed(1)} kg</span>
+                  <span className="font-bold text-lg" style={{ color: '#f59e0b' }}>{browns.toFixed(1)} kg</span>
                 </div>
                 <input
                   type="range" min="0" max="20" step="0.1"
                   value={browns}
                   onChange={(e) => setBrowns(Number(e.target.value))}
-                  className="w-full h-2 rounded-lg appearance-none cursor-pointer bg-gray-100"
-                  style={{ accentColor: '#8B4513' }}
+                  className="w-full h-2 rounded-lg appearance-none cursor-pointer"
+                  style={{ backgroundColor: 'rgba(255,255,255,0.1)', accentColor: '#f59e0b' }}
                 />
               </div>
             </div>
 
-            <div className="mt-12 pt-8 border-t border-gray-50">
+            <div className="mt-12 pt-8" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
               <div className="flex items-center justify-between mb-8">
                 <div>
-                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total Weight</p>
-                  <p className="text-3xl font-black text-gray-900 tracking-tighter">{(greens + browns).toFixed(1)} KG</p>
+                  <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: '#6b7280' }}>Total Weight</p>
+                  <p className="text-3xl font-bold text-white tracking-tighter">{(greens + browns).toFixed(1)} KG</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">XP Reward</p>
-                  <p className="text-3xl font-black text-[#1A5C38] tracking-tighter">+{Math.round((greens + browns) * 20)} ✨</p>
+                  <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: '#6b7280' }}>XP Reward</p>
+                  <p className="text-3xl font-bold tracking-tighter" style={{ color: '#22c55e' }}>+{Math.round((greens + browns) * 20)} ✨</p>
                 </div>
               </div>
 
               <button 
                 onClick={handleLogWaste}
                 disabled={logging || (greens === 0 && browns === 0) || (image && analysisResult && !analysisResult.verified)}
-                className={`w-full py-6 rounded-3xl font-black text-sm uppercase tracking-[0.2em] transition-all duration-300 shadow-xl flex items-center justify-center gap-3 cursor-pointer ${
+                className={`w-full py-5 rounded-xl font-bold text-xs uppercase tracking-widest transition-all duration-300 flex items-center justify-center gap-3 cursor-pointer ${
                   (greens === 0 && browns === 0) || logging || (image && analysisResult && !analysisResult.verified)
-                    ? 'bg-gray-100 text-gray-400 shadow-none cursor-not-allowed'
-                    : 'bg-[#1A5C38] text-white shadow-[#1A5C38]/20 hover:scale-[1.02] active:scale-[0.98]'
+                    ? 'opacity-30 cursor-not-allowed'
+                    : 'hover:scale-[1.02] active:scale-[0.98]'
                 }`}
+                style={{ 
+                  background: (greens === 0 && browns === 0) || logging || (image && analysisResult && !analysisResult.verified)
+                    ? 'rgba(255,255,255,0.05)'
+                    : 'linear-gradient(to bottom, #22c55e, #16a34a)',
+                  color: 'white',
+                  boxShadow: (greens === 0 && browns === 0) || logging || (image && analysisResult && !analysisResult.verified)
+                    ? 'none'
+                    : '0 8px 32px rgba(34,197,94,0.3)'
+                }}
               >
                 {logging ? (
                   <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>

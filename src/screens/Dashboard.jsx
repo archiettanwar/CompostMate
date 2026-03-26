@@ -29,7 +29,7 @@ export default function Dashboard() {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (!firebaseUser) {
-        navigate("/");
+        navigate("/auth");
         return;
       }
       setUser(firebaseUser);
@@ -46,7 +46,6 @@ export default function Dashboard() {
     return () => unsubscribe();
   }, [navigate]);
 
-  // Initialize chat with welcome message when first opened
   useEffect(() => {
     if (isChatOpen && messages.length === 0) {
       setMessages([
@@ -112,51 +111,51 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#F9FBF9]">
-        <div className="text-[#1A5C38] font-bold animate-pulse text-xl tracking-widest uppercase">Loading Dashboard...</div>
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#0a0a0a' }}>
+        <div className="font-bold animate-pulse text-xl tracking-widest uppercase" style={{ color: '#22c55e' }}>Loading Dashboard...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-white" style={{ backgroundColor: '#F9FBF9' }}>
+    <div className="min-h-screen" style={{ backgroundColor: '#0a0a0a' }}>
       <Sidebar />
 
       {/* Main Content */}
       <div className="ml-64 p-10 min-h-screen">
         {/* Top Bar */}
-        <div className="flex justify-between items-end mb-10 border-b border-gray-100 pb-8 animate-in fade-in slide-in-from-top-4 duration-500">
+        <div className="flex justify-between items-end mb-10 pb-8" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
           <div>
-            <h1 className="text-4xl font-black text-gray-900 tracking-tighter">
+            <h1 className="text-4xl font-bold text-white tracking-tight">
               Good morning, {user?.displayName?.split(' ')[0] || userData?.name?.split(' ')[0] || "Composter"} 👋
             </h1>
-            <p className="text-gray-400 font-bold mt-2 uppercase text-xs tracking-widest">{getDateString()}</p>
+            <p className="mt-2 uppercase text-xs tracking-widest font-semibold" style={{ color: '#6b7280' }}>{getDateString()}</p>
           </div>
-          <div className="hidden lg:flex items-center gap-3 bg-white p-2 rounded-2xl border border-gray-100 shadow-sm">
-             <div className="px-4 py-2 bg-green-50 rounded-xl">
-                <span className="text-[#1A5C38] font-black text-xs uppercase tracking-widest">Active System</span>
+          <div className="hidden lg:flex items-center gap-3 p-2 rounded-xl" style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+             <div className="px-4 py-2 rounded-lg" style={{ backgroundColor: 'rgba(34,197,94,0.12)' }}>
+                <span className="font-bold text-xs uppercase tracking-widest" style={{ color: '#22c55e' }}>Active System</span>
              </div>
           </div>
         </div>
 
         {/* Join Society Banner */}
         {userData?.societyId === null && (
-          <div className="mb-10 p-8 bg-gradient-to-r from-[#1A5C38] to-[#2E8B57] rounded-[40px] shadow-2xl shadow-green-900/10 flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden group animate-in slide-in-from-right-4 duration-1000">
-            {/* Background pattern */}
+          <div className="mb-10 p-8 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden group" style={{ background: 'linear-gradient(135deg, rgba(34,197,94,0.15) 0%, rgba(22,163,74,0.08) 100%)', border: '1px solid rgba(34,197,94,0.2)' }}>
             <div className="absolute top-0 right-0 p-10 opacity-10 pointer-events-none group-hover:scale-110 transition-transform duration-700">
                 <span className="text-9xl">🏢</span>
             </div>
             
             <div className="relative z-10 text-center md:text-left">
-              <h2 className="text-xl font-black text-white tracking-tight mb-2 uppercase">Unlock Society Features 🏢</h2>
-              <p className="text-green-50 text-xs font-bold uppercase tracking-widest leading-relaxed max-w-lg">
+              <h2 className="text-xl font-bold text-white tracking-tight mb-2">Unlock Society Features 🏢</h2>
+              <p className="text-xs font-semibold uppercase tracking-widest leading-relaxed max-w-lg" style={{ color: '#9ca3af' }}>
                 You haven't joined a society yet. Join now to unlock building leaderboard 🏆 and maintenance discounts! 💰
               </p>
             </div>
             
             <button 
               onClick={() => navigate('/join-society')}
-              className="relative z-10 px-8 py-4 bg-white text-[#1A5C38] rounded-2xl font-black text-[10px] uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-xl shadow-black/10 cursor-pointer"
+              className="relative z-10 px-8 py-4 rounded-xl font-bold text-[10px] uppercase tracking-widest hover:scale-105 active:scale-95 transition-all cursor-pointer"
+              style={{ background: 'linear-gradient(to bottom, #22c55e, #16a34a)', color: 'white', boxShadow: '0 8px 32px rgba(34,197,94,0.3)' }}
             >
               Join Your Society 🚀
             </button>
@@ -164,38 +163,38 @@ export default function Dashboard() {
         )}
 
         {/* Stats Row */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
           {/* XP Card */}
-          <div className="bg-white rounded-3xl shadow-xl shadow-black/5 p-8 border border-gray-50 hover:scale-[1.02] transition-transform duration-300 group">
-            <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest mb-3">Total Growth</p>
+          <div className="rounded-xl p-6 hover:scale-[1.02] transition-transform duration-300 group" style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+            <p className="text-[10px] font-bold uppercase tracking-widest mb-3" style={{ color: '#6b7280' }}>Total Growth</p>
             <div className="flex items-baseline gap-2">
-              <p className="text-4xl font-black text-gray-900 tracking-tighter group-hover:text-[#1A5C38] transition-colors">{userData?.xp ?? 0}</p>
-              <p className="text-sm font-bold text-gray-400 uppercase">XP</p>
+              <p className="text-4xl font-bold text-white tracking-tight group-hover:text-[#22c55e] transition-colors">{userData?.xp ?? 0}</p>
+              <p className="text-sm font-semibold uppercase" style={{ color: '#6b7280' }}>XP</p>
             </div>
           </div>
 
           {/* Level Card */}
-          <div className="bg-white rounded-3xl shadow-xl shadow-black/5 p-8 border border-gray-50 hover:scale-[1.02] transition-transform duration-300">
-            <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest mb-3">Ranking</p>
-            <p className="text-4xl font-black text-gray-900 tracking-tighter">Level {userData?.level ?? 1}</p>
-            <p className="text-xs font-black text-[#1A5C38] mt-2 uppercase tracking-wider">Seedling 🌱</p>
+          <div className="rounded-xl p-6 hover:scale-[1.02] transition-transform duration-300" style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+            <p className="text-[10px] font-bold uppercase tracking-widest mb-3" style={{ color: '#6b7280' }}>Ranking</p>
+            <p className="text-4xl font-bold text-white tracking-tight">Level {userData?.level ?? 1}</p>
+            <p className="text-xs font-bold mt-2 uppercase tracking-wider" style={{ color: '#22c55e' }}>Seedling 🌱</p>
           </div>
 
           {/* Streak Card */}
-          <div className="bg-white rounded-3xl shadow-xl shadow-black/5 p-8 border border-gray-50 hover:scale-[1.02] transition-transform duration-300">
-            <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest mb-3">Persistence</p>
+          <div className="rounded-xl p-6 hover:scale-[1.02] transition-transform duration-300" style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+            <p className="text-[10px] font-bold uppercase tracking-widest mb-3" style={{ color: '#6b7280' }}>Persistence</p>
             <div className="flex items-center gap-3">
-              <p className="text-4xl font-black text-gray-900 tracking-tighter">{userData?.streak ?? 0} Days</p>
+              <p className="text-4xl font-bold text-white tracking-tight">{userData?.streak ?? 0} Days</p>
               <span className="text-2xl animate-bounce">🔥</span>
             </div>
           </div>
 
           {/* Waste Diverted Card */}
-          <div className="bg-white rounded-3xl shadow-xl shadow-black/5 p-8 border border-gray-50 hover:scale-[1.02] transition-transform duration-300">
-            <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest mb-3">Impact</p>
+          <div className="rounded-xl p-6 hover:scale-[1.02] transition-transform duration-300" style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+            <p className="text-[10px] font-bold uppercase tracking-widest mb-3" style={{ color: '#6b7280' }}>Impact</p>
             <div className="flex items-baseline gap-2">
-              <p className="text-4xl font-black text-gray-900 tracking-tighter">{userData?.totalWasteKg ?? 0}</p>
-              <p className="text-sm font-bold text-gray-400 uppercase">KG</p>
+              <p className="text-4xl font-bold text-white tracking-tight">{userData?.totalWasteKg ?? 0}</p>
+              <p className="text-sm font-semibold uppercase" style={{ color: '#6b7280' }}>KG</p>
             </div>
           </div>
         </div>
@@ -203,49 +202,44 @@ export default function Dashboard() {
         {/* Two Column Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-8">
-            <div className="bg-white rounded-3xl shadow-xl shadow-black/5 p-10 border border-gray-50 relative overflow-hidden">
-               <div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none">
-                <svg width="150" height="150" viewBox="0 0 100 100">
-                  <path d="M50 10 Q70 30 50 60 Q30 30 50 10" fill="#1A5C38" />
-                </svg>
-              </div>
-              <h2 className="text-2xl font-black text-gray-900 tracking-tight mb-8">Cycle Maturity Tracking</h2>
-              <div className="flex flex-col items-center justify-center py-10 bg-[#F9FBF9]/50 rounded-[40px] border border-[#1A5C38]/5">
+            <div className="rounded-xl p-8 relative overflow-hidden" style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <h2 className="text-xl font-bold text-white tracking-tight mb-8">Cycle Maturity Tracking</h2>
+              <div className="flex flex-col items-center justify-center py-10 rounded-xl" style={{ backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
                 <div className="relative w-48 h-48 mb-8">
-                  <svg className="w-full h-full transform -rotate-90 filter drop-shadow-lg" viewBox="0 0 120 120">
-                    <circle cx="60" cy="60" r="54" fill="none" stroke="#f3f4f6" strokeWidth="10" />
+                  <svg className="w-full h-full transform -rotate-90" viewBox="0 0 120 120">
+                    <circle cx="60" cy="60" r="54" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="10" />
                     <circle
                       cx="60"
                       cy="60"
                       r="54"
                       fill="none"
-                      stroke="#1A5C38"
+                      stroke="#22c55e"
                       strokeWidth="10"
                       strokeDasharray="0 345"
                       strokeLinecap="round"
                     />
-                    <text x="60" y="68" textAnchor="middle" fontSize="28" fontWeight="black" fill="#1A5C38" className="tracking-tighter transform rotate-90 origin-center translate-y-[2px]">
+                    <text x="60" y="68" textAnchor="middle" fontSize="28" fontWeight="bold" fill="#22c55e" className="transform rotate-90 origin-center translate-y-[2px]">
                       0%
                     </text>
                   </svg>
                 </div>
-                <p className="text-xl font-black text-gray-900 mb-2">Initialize Your Cycle</p>
-                <p className="text-gray-400 font-bold mb-8 text-center max-w-sm text-sm uppercase tracking-tight">Set up your first composting bin to start tracking maturity and Diverting waste.</p>
+                <p className="text-lg font-bold text-white mb-2">Initialize Your Cycle</p>
+                <p className="font-semibold mb-8 text-center max-w-sm text-sm" style={{ color: '#6b7280' }}>Set up your first composting bin to start tracking maturity and diverting waste.</p>
                 <button
-                  className="px-10 py-4 rounded-2xl font-black text-white hover:scale-105 transition-all duration-300 shadow-xl shadow-[#1A5C38]/20 uppercase text-xs tracking-widest cursor-pointer"
-                  style={{ backgroundColor: '#1A5C38' }}
+                  className="px-10 py-4 rounded-xl font-bold text-white hover:scale-105 transition-all duration-300 uppercase text-xs tracking-widest cursor-pointer"
+                  style={{ background: 'linear-gradient(to bottom, #22c55e, #16a34a)', boxShadow: '0 8px 32px rgba(34,197,94,0.25)' }}
                 >
                   Configure Bin Profile
                 </button>
               </div>
             </div>
 
-            <div className="bg-white rounded-3xl shadow-xl shadow-black/5 p-10 border border-gray-50">
-              <h2 className="text-2xl font-black text-gray-900 tracking-tight mb-8">Recent Waste Logs</h2>
-              <div className="flex flex-col items-center justify-center py-16 bg-[#F9FBF9]/50 rounded-[40px] border border-dashed border-gray-200">
-                 <div className="text-5xl mb-4 grayscale opacity-20">🍃</div>
-                <p className="text-gray-400 font-black text-center uppercase tracking-widest text-xs">Awaiting first log...</p>
-                <p className="text-gray-300 text-[10px] font-bold text-center mt-2 uppercase tracking-widest">
+            <div className="rounded-xl p-8" style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <h2 className="text-xl font-bold text-white tracking-tight mb-8">Recent Waste Logs</h2>
+              <div className="flex flex-col items-center justify-center py-16 rounded-xl" style={{ border: '1px dashed rgba(255,255,255,0.1)' }}>
+                 <div className="text-5xl mb-4 opacity-20">🍃</div>
+                <p className="font-bold text-center uppercase tracking-widest text-xs" style={{ color: '#6b7280' }}>Awaiting first log...</p>
+                <p className="text-[10px] font-semibold text-center mt-2 uppercase tracking-widest" style={{ color: '#4b5563' }}>
                   Start logging your waste to build your compost matrix
                 </p>
               </div>
@@ -253,26 +247,28 @@ export default function Dashboard() {
           </div>
 
           <div className="space-y-8">
-            <div className="bg-white rounded-3xl shadow-xl shadow-black/5 p-8 border border-gray-50">
-              <h2 className="text-xl font-black text-gray-900 tracking-tight mb-6 uppercase text-xs tracking-[0.2em] text-gray-400">Control Center</h2>
-              <div className="space-y-4">
+            <div className="rounded-xl p-6" style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <h2 className="text-[10px] font-bold uppercase tracking-[0.2em] mb-6" style={{ color: '#6b7280' }}>Control Center</h2>
+              <div className="space-y-3">
                 <button
                   onClick={() => navigate('/log')}
-                  className="w-full py-5 px-6 rounded-2xl font-black text-white hover:scale-[1.02] transition-all duration-300 shadow-xl shadow-[#1A5C38]/10 flex items-center justify-between group cursor-pointer"
-                  style={{ backgroundColor: '#1A5C38' }}
+                  className="w-full py-4 px-5 rounded-xl font-bold text-white hover:scale-[1.02] transition-all duration-300 flex items-center justify-between group cursor-pointer"
+                  style={{ background: 'linear-gradient(to bottom, #22c55e, #16a34a)', boxShadow: '0 4px 24px rgba(34,197,94,0.2)' }}
                 >
                   <span className="uppercase text-xs tracking-widest">Log Waste Batch</span>
                   <span className="text-xl group-hover:rotate-12 transition-transform">📝</span>
                 </button>
                 <button
                   onClick={() => setIsChatOpen(true)}
-                  className="w-full py-5 px-6 rounded-2xl font-black text-[#1A5C38] border-2 border-[#1A5C38]/20 hover:bg-[#1A5C38]/5 transition-all duration-300 flex items-center justify-between cursor-pointer"
+                  className="w-full py-4 px-5 rounded-xl font-bold transition-all duration-300 flex items-center justify-between cursor-pointer"
+                  style={{ backgroundColor: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', color: '#22c55e' }}
                 >
                   <span className="uppercase text-xs tracking-widest">Ask CompostBot</span>
                   <span className="text-xl">💬</span>
                 </button>
                 <button
-                  className="w-full py-5 px-6 rounded-2xl font-black text-gray-700 border-2 border-gray-100 hover:bg-gray-50 transition-all duration-300 flex items-center justify-between cursor-pointer"
+                  className="w-full py-4 px-5 rounded-xl font-bold transition-all duration-300 flex items-center justify-between cursor-pointer"
+                  style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: '#9ca3af' }}
                 >
                   <span className="uppercase text-xs tracking-widest">Vision Analysis</span>
                   <span className="text-xl">📸</span>
@@ -280,27 +276,28 @@ export default function Dashboard() {
               </div>
             </div>
 
-            <div className="bg-white rounded-3xl shadow-xl shadow-black/5 p-8 border border-gray-50 text-center relative overflow-hidden">
-               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-green-500 to-amber-500 opacity-20"></div>
-              <h2 className="text-lg font-black text-gray-900 tracking-tight mb-6 uppercase text-xs tracking-[0.2em] text-gray-400">C:N Matrix</h2>
-              <div className="flex flex-col items-center justify-center py-10 rounded-[32px] bg-gray-50/50">
-                <p className="text-6xl font-black text-gray-200 tracking-tighter mb-4">—</p>
-                <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest max-w-[140px] leading-relaxed">Insufficient data for ratio projection</p>
+            <div className="rounded-xl p-6 text-center relative overflow-hidden" style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+               <div className="absolute top-0 left-0 w-full h-0.5" style={{ background: 'linear-gradient(to right, #22c55e, #f59e0b)', opacity: 0.3 }}></div>
+              <h2 className="text-[10px] font-bold uppercase tracking-[0.2em] mb-6" style={{ color: '#6b7280' }}>C:N Matrix</h2>
+              <div className="flex flex-col items-center justify-center py-10 rounded-xl" style={{ backgroundColor: 'rgba(255,255,255,0.02)' }}>
+                <p className="text-6xl font-bold mb-4" style={{ color: 'rgba(255,255,255,0.1)' }}>—</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest max-w-[140px] leading-relaxed" style={{ color: '#6b7280' }}>Insufficient data for ratio projection</p>
               </div>
             </div>
 
             {/* Keep Learning Widget */}
-            <div className="bg-white rounded-3xl shadow-xl shadow-black/5 p-8 border border-gray-50 relative overflow-hidden">
-               <h2 className="text-lg font-black text-gray-900 tracking-tight mb-6 uppercase text-xs tracking-[0.2em] text-gray-400">📚 Keep Learning</h2>
-               <div className="space-y-4">
+            <div className="rounded-xl p-6 relative overflow-hidden" style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+               <h2 className="text-[10px] font-bold uppercase tracking-[0.2em] mb-6" style={{ color: '#6b7280' }}>📚 Keep Learning</h2>
+               <div className="space-y-3">
                  {articles.filter(a => !readArticles.includes(a.id)).slice(0, 2).length > 0 ? (
                    articles.filter(a => !readArticles.includes(a.id)).slice(0, 2).map((article) => (
-                     <div key={article.id} className="p-4 bg-gray-50 rounded-2xl border border-gray-100 group hover:border-[#1A5C38]/20 transition-all">
-                       <p className="text-[10px] font-black text-[#F4A300] uppercase tracking-widest mb-1">{article.topic}</p>
-                       <h4 className="text-xs font-black text-gray-900 leading-tight mb-2 group-hover:text-[#1A5C38] transition-colors">{article.title}</h4>
+                     <div key={article.id} className="p-4 rounded-xl group transition-all" style={{ backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                       <p className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: '#f59e0b' }}>{article.topic}</p>
+                       <h4 className="text-xs font-bold text-white leading-tight mb-2 group-hover:text-[#22c55e] transition-colors">{article.title}</h4>
                        <button 
                          onClick={() => navigate('/learn')} 
-                         className="text-[10px] font-black text-[#1A5C38] uppercase tracking-widest hover:underline cursor-pointer"
+                         className="text-[10px] font-bold uppercase tracking-widest hover:underline cursor-pointer"
+                         style={{ color: '#22c55e' }}
                        >
                          Read →
                        </button>
@@ -308,63 +305,60 @@ export default function Dashboard() {
                    ))
                  ) : (
                    <div className="py-6 text-center">
-                     <p className="text-xs font-black text-gray-400 uppercase tracking-widest">🎉 You've read all articles!</p>
-                     <p className="text-[8px] text-gray-300 uppercase mt-1">Check back soon for more guides.</p>
+                     <p className="text-xs font-bold uppercase tracking-widest" style={{ color: '#6b7280' }}>🎉 You've read all articles!</p>
+                     <p className="text-[8px] uppercase mt-1" style={{ color: '#4b5563' }}>Check back soon for more guides.</p>
                    </div>
                  )}
                </div>
             </div>
 
             {/* TOOLS & ACCESSORIES WIDGET */}
-            <div className="bg-white rounded-3xl p-8 border border-gray-100 shadow-xl shadow-black/5 mb-8">
-              <div className="flex items-center justify-between mb-8">
+            <div className="rounded-xl p-6 mb-8" style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <div className="flex items-center justify-between mb-6">
                 <div>
-                  <h3 className="text-xl font-black text-gray-900 tracking-tight">🛠️ Tools</h3>
-                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Curated Selection</p>
+                  <h3 className="text-lg font-bold text-white tracking-tight">🛠️ Tools</h3>
+                  <p className="text-[10px] font-semibold uppercase tracking-widest mt-1" style={{ color: '#6b7280' }}>Curated Selection</p>
                 </div>
                 <button 
                   onClick={() => navigate("/tools")}
-                  className="text-[#1A5C38] font-black text-xs uppercase tracking-widest hover:translate-x-1 transition-all"
+                  className="font-bold text-xs uppercase tracking-widest hover:translate-x-1 transition-all cursor-pointer"
+                  style={{ color: '#22c55e' }}
                 >
                   All →
                 </button>
               </div>
-              <div className="space-y-4 mb-6">
+              <div className="space-y-3 mb-6">
                 {[
-                  {
-                    name: "20L Bin",
-                    price: "₹800+",
-                    image: "/assets/tools/bin_20l.jpg",
-                  },
-                  {
-                    name: "Aerator",
-                    price: "₹400+",
-                    image: "/assets/tools/aerator.jpg",
-                  }
+                  { name: "20L Bin", price: "₹800+", image: "/assets/tools/bin_20l.jpg" },
+                  { name: "Aerator", price: "₹400+", image: "/assets/tools/aerator.jpg" }
                 ].map((item, i) => (
-                  <div key={i} className="flex gap-4 p-4 rounded-2xl hover:bg-gray-50 transition-all border border-transparent hover:border-gray-100 group cursor-pointer" onClick={() => navigate("/tools")}>
-                    <img src={item.image} alt={item.name} className="w-12 h-12 rounded-xl object-cover" />
+                  <div key={i} className="flex gap-4 p-3 rounded-xl transition-all group cursor-pointer" style={{ border: '1px solid transparent' }} onClick={() => navigate("/tools")}
+                    onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.borderColor = 'transparent'; }}
+                  >
+                    <img src={item.image} alt={item.name} className="w-12 h-12 rounded-lg object-cover" />
                     <div className="flex-1">
-                      <h4 className="font-bold text-xs text-gray-900">{item.name}</h4>
-                      <p className="text-[#1A5C38] font-black text-[10px]">{item.price}</p>
+                      <h4 className="font-semibold text-xs text-white">{item.name}</h4>
+                      <p className="font-bold text-[10px]" style={{ color: '#22c55e' }}>{item.price}</p>
                     </div>
                   </div>
                 ))}
               </div>
               <button 
                 onClick={() => navigate("/tools")}
-                className="w-full py-4 bg-[#1A5C38] text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-green-900/10 hover:bg-[#144a2d] transition-all"
+                className="w-full py-4 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all cursor-pointer text-white"
+                style={{ background: 'linear-gradient(to bottom, #22c55e, #16a34a)', boxShadow: '0 4px 24px rgba(34,197,94,0.2)' }}
               >
                 Browse All Tools
               </button>
             </div>
 
-             <div className="bg-gradient-to-br from-[#1A5C38] to-[#2E8B57] rounded-3xl shadow-xl shadow-[#1A5C38]/20 p-8 text-white">
+             <div className="rounded-xl p-6" style={{ background: 'linear-gradient(135deg, rgba(34,197,94,0.15) 0%, rgba(22,163,74,0.08) 100%)', border: '1px solid rgba(34,197,94,0.2)' }}>
                 <div className="flex items-center gap-2 mb-4">
                    <span className="text-xl">💡</span>
-                   <h3 className="font-black text-xs uppercase tracking-widest">Eco Tip</h3>
+                   <h3 className="font-bold text-xs uppercase tracking-widest text-white">Eco Tip</h3>
                 </div>
-                <p className="font-bold text-sm leading-relaxed opacity-90 italic">
+                <p className="font-medium text-sm leading-relaxed italic" style={{ color: '#9ca3af' }}>
                   "Maintain a 30:1 carbon-to-nitrogen ratio for the most efficient decomposition process."
                 </p>
              </div>
@@ -376,37 +370,42 @@ export default function Dashboard() {
       
       {/* Chat Popup */}
       <div 
-        className={`fixed bottom-[110px] right-8 z-50 w-[380px] h-[500px] bg-white rounded-2xl shadow-2xl border border-gray-100 flex flex-col transition-all duration-300 origin-bottom-right ${
+        className={`fixed bottom-[110px] right-8 z-50 w-[380px] h-[500px] rounded-2xl flex flex-col transition-all duration-300 origin-bottom-right ${
           isChatOpen ? 'scale-100 opacity-100 translate-y-0' : 'scale-75 opacity-0 translate-y-10 pointer-events-none'
         }`}
+        style={{ backgroundColor: '#111111', border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 25px 50px rgba(0,0,0,0.5)' }}
       >
         {/* Header */}
-        <div className="bg-[#1A5C38] rounded-t-2xl p-4 flex flex-col justify-center shrink-0 shadow-lg">
-          <h3 className="text-white font-black tracking-tight text-lg mb-0.5">🌱 CompostBot</h3>
-          <p className="text-[#A7D7BC] text-[10px] font-bold uppercase tracking-wider">Ask me anything about composting</p>
+        <div className="rounded-t-2xl p-4 flex flex-col justify-center shrink-0" style={{ background: 'linear-gradient(to right, #16a34a, #22c55e)' }}>
+          <h3 className="text-white font-bold tracking-tight text-lg mb-0.5">🌱 CompostBot</h3>
+          <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.7)' }}>Ask me anything about composting</p>
         </div>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-[#F9FBF9] custom-scrollbar">
+        <div className="flex-1 overflow-y-auto p-4 space-y-4" style={{ backgroundColor: '#0a0a0a' }}>
           {messages.map((msg, index) => (
             <div key={index} className={`flex flex-col ${msg.sender === "user" ? "items-end" : "items-start"}`}>
               <div
-                className={`max-w-[80%] rounded-2xl px-4 py-3 shadow-sm text-sm font-medium leading-relaxed ${
+                className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm font-medium leading-relaxed ${
                   msg.sender === "user"
-                    ? "bg-[#1A5C38] text-white rounded-tr-none"
-                    : "bg-white text-gray-700 border border-gray-100 rounded-tl-none shadow-black/5"
+                    ? "text-white rounded-tr-none"
+                    : "text-[#9ca3af] rounded-tl-none"
                 }`}
+                style={msg.sender === "user" 
+                  ? { background: 'linear-gradient(to bottom, #22c55e, #16a34a)' }
+                  : { backgroundColor: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)' }
+                }
               >
                 {msg.text}
               </div>
-              <span className="text-[10px] font-bold text-gray-300 uppercase mt-1 px-1">
+              <span className="text-[10px] font-semibold uppercase mt-1 px-1" style={{ color: '#4b5563' }}>
                 {msg.timestamp}
               </span>
             </div>
           ))}
           {isChatLoading && (
             <div className="flex flex-col items-start">
-               <div className="bg-white text-[#1A5C38] text-[10px] font-bold border border-[#1A5C38]/10 rounded-2xl px-4 py-2 shadow-sm italic animate-pulse">
+               <div className="text-[10px] font-semibold rounded-2xl px-4 py-2 italic animate-pulse" style={{ backgroundColor: 'rgba(34,197,94,0.1)', color: '#22c55e', border: '1px solid rgba(34,197,94,0.2)' }}>
                 Thinking...
               </div>
             </div>
@@ -415,20 +414,22 @@ export default function Dashboard() {
         </div>
 
         {/* Input Bar */}
-        <div className="p-4 bg-white border-t border-gray-100">
+        <div className="p-4" style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
           <form onSubmit={handleChatSend} className="flex gap-2">
             <input
               type="text"
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
               placeholder="Ask a question..."
-              className="flex-1 bg-gray-50 border border-gray-200 rounded-full px-5 py-2.5 text-xs font-bold text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#1A5C38] transition-all"
+              className="flex-1 rounded-full px-5 py-2.5 text-xs font-semibold text-white focus:outline-none transition-all"
+              style={{ backgroundColor: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
               disabled={isChatLoading}
             />
             <button
               type="submit"
               disabled={isChatLoading || !inputText.trim()}
-              className="w-10 h-10 rounded-full bg-[#1A5C38] flex items-center justify-center text-white shadow-lg shadow-[#1A5C38]/20 transition-all active:scale-90 disabled:opacity-50 cursor-pointer"
+              className="w-10 h-10 rounded-full flex items-center justify-center text-white transition-all active:scale-90 disabled:opacity-50 cursor-pointer"
+              style={{ background: 'linear-gradient(to bottom, #22c55e, #16a34a)', boxShadow: '0 4px 16px rgba(34,197,94,0.3)' }}
             >
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
@@ -441,7 +442,8 @@ export default function Dashboard() {
       {/* Floating Toggle Button */}
       <button
         onClick={() => setIsChatOpen(!isChatOpen)}
-        className="fixed bottom-8 right-8 z-50 w-[60px] h-[60px] bg-[#1A5C38] rounded-full shadow-2xl shadow-[#1A5C38]/30 flex items-center justify-center text-2xl transition-all duration-300 hover:scale-110 active:scale-90 cursor-pointer"
+        className="fixed bottom-8 right-8 z-50 w-[60px] h-[60px] rounded-full flex items-center justify-center text-2xl transition-all duration-300 hover:scale-110 active:scale-90 cursor-pointer"
+        style={{ background: 'linear-gradient(to bottom, #22c55e, #16a34a)', boxShadow: '0 8px 32px rgba(34,197,94,0.3)' }}
       >
         {isChatOpen ? (
           <span className="text-white text-xl">✕</span>
@@ -449,23 +451,6 @@ export default function Dashboard() {
           <span className="filter drop-shadow-md">🌱</span>
         )}
       </button>
-
-      {/* --- Styles for Sidebar/Chat Scrollbar --- */}
-      <style dangerouslySetInnerHTML={{ __html: `
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 4px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: transparent;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: rgba(0,0,0,0.05);
-          border-radius: 10px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: rgba(0,0,0,0.1);
-        }
-      `}} />
     </div>
   );
 }

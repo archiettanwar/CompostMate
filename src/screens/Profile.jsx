@@ -27,21 +27,14 @@ const Profile = () => {
   const handleUploadDP = async (e) => {
     const file = e.target.files[0];
     if (!file || !user) return;
-
     setUploading(true);
     try {
       const storageRef = ref(storage, `profilePictures/${user.uid}`);
       await uploadBytes(storageRef, file);
       const downloadURL = await getDownloadURL(storageRef);
-
-      // Update Firebase Auth profile
       await updateProfile(user, { photoURL: downloadURL });
-
-      // Update Firestore user document
       const userRef = doc(db, "users", user.uid);
       await updateDoc(userRef, { photoURL: downloadURL });
-
-      // Update local state
       setUserData(prev => ({ ...prev, photoURL: downloadURL }));
       showToast("Profile picture updated! ✨");
     } catch (error) {
@@ -54,36 +47,23 @@ const Profile = () => {
 
   const handleDeleteAccount = async () => {
     if (!user) return;
-    
     const confirmDelete = await showModal({
       title: "Delete Account?",
       message: "This action is permanent and will wipe all your waste logs, XP, and badges. Are you absolutely sure?",
       confirmLabel: "Yes, Delete Everything",
       cancelLabel: "No, Keep My Progress"
     });
-
     if (!confirmDelete) return;
-
-    setIsDeleting(true);
     try {
-      // 1. Delete Firestore logs first (recursive wipe)
       const logsRef = collection(db, "users", user.uid, "logs");
       const logsSnap = await getDocs(logsRef);
-      
-      // Delete logs in parallel for speed
       const deletePromises = logsSnap.docs.map(logDoc => deleteDoc(logDoc.ref));
       await Promise.all(deletePromises);
-
-      // 2. Delete the main User document
       const userRef = doc(db, "users", user.uid);
-      await deleteDoc(userRef); 
-      
-      // 3. Delete the Auth user
+      await deleteDoc(userRef);
       await user.delete();
-      
-      // 4. Clear data and navigate
       showToast("Account successfully wiped. Goodbye! 👋");
-      navigate("/");
+      navigate("/auth");
     } catch (error) {
       console.error("Error deleting account:", error);
       if (error.code === 'auth/requires-recent-login') {
@@ -92,17 +72,13 @@ const Profile = () => {
         showToast("Failed to delete account.", "error");
       }
     } finally {
-      setIsDeleting(false);
       setShowDeleteModal(false);
     }
   };
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (!firebaseUser) {
-        navigate("/");
-        return;
-      }
+      if (!firebaseUser) { navigate("/auth"); return; }
       setUser(firebaseUser);
       try {
         const docSnap = await getDoc(doc(db, "users", firebaseUser.uid));
@@ -110,128 +86,76 @@ const Profile = () => {
           const data = docSnap.data();
           setUserData(data);
           setTempFlat(data.flatNumber || "");
-          
           if (data.societyId) {
             const socSnap = await getDoc(doc(db, "societies", data.societyId));
-            if (socSnap.exists()) {
-              setSocietyName(socSnap.data().name);
-            }
+            if (socSnap.exists()) setSocietyName(socSnap.data().name);
           }
         }
-      } catch (error) {
-        console.error("Error fetching user data:", error);
-      }
+      } catch (error) { console.error("Error fetching user data:", error); }
       setLoading(false);
     });
     return () => unsubscribe();
   }, [navigate]);
 
   const handleUpdateFlat = async () => {
-    if (!tempFlat.trim() || tempFlat === userData.flatNumber) {
-      setIsEditingFlat(false);
-      return;
-    }
-
+    if (!tempFlat.trim() || tempFlat === userData.flatNumber) { setIsEditingFlat(false); return; }
     try {
-      // Check for uniqueness if in a society
       if (userData.societyId) {
         const usersRef = collection(db, "users");
-        const q = query(
-          usersRef, 
-          where("societyId", "==", userData.societyId), 
-          where("flatNumber", "==", tempFlat.trim())
-        );
+        const q = query(usersRef, where("societyId", "==", userData.societyId), where("flatNumber", "==", tempFlat.trim()));
         const snap = await getDocs(q);
-        if (!snap.empty) {
-          showToast("This flat number is already taken.", "error");
-          return;
-        }
+        if (!snap.empty) { showToast("This flat number is already taken.", "error"); return; }
       }
-
       const userRef = doc(db, "users", user.uid);
       await updateDoc(userRef, { flatNumber: tempFlat.trim() });
       setUserData(prev => ({ ...prev, flatNumber: tempFlat.trim() }));
       setIsEditingFlat(false);
       showToast("Flat number updated! 🏠");
-    } catch (err) {
-      console.error("Flat Update Error:", err);
-      showToast("Failed to update flat number.", "error");
-    }
+    } catch (err) { console.error("Flat Update Error:", err); showToast("Failed to update flat number.", "error"); }
   };
 
   const handleLeaveSociety = async () => {
     if (!userData.societyId) return;
-
     const confirm = await showModal({
-      title: "Leave Society?",
-      message: `Are you sure you want to leave ${societyName}? All your data remains, but you will lose access to building stats and rankings.`,
-      confirmLabel: "Yes, Leave Building",
-      cancelLabel: "Stay"
+      title: "Leave Society?", message: `Are you sure you want to leave ${societyName}?`,
+      confirmLabel: "Yes, Leave Building", cancelLabel: "Stay"
     });
-
     if (!confirm) return;
-
     setLeaving(true);
     try {
       const userRef = doc(db, "users", user.uid);
       const societyRef = doc(db, "societies", userData.societyId);
-
-      // 1. Remove UID from society memberIds
       const socSnap = await getDoc(societyRef);
       if (socSnap.exists()) {
         const members = socSnap.data().memberIds || [];
         const newMembers = members.filter(id => id !== user.uid);
-        
-        // Administrative check
         if (socSnap.data().adminId === user.uid && newMembers.length > 0) {
           showToast("Building Secretary cannot leave without transferring ownership.", "error");
-          setLeaving(false);
-          return;
+          setLeaving(false); return;
         }
-
         await updateDoc(societyRef, { memberIds: newMembers });
       }
-
-      // 2. Clear society fields from User
-      await updateDoc(userRef, {
-        societyId: null,
-        role: "user",
-        flatNumber: ""
-      });
-
+      await updateDoc(userRef, { societyId: null, role: "user", flatNumber: "" });
       setUserData(prev => ({ ...prev, societyId: null, role: "user", flatNumber: "" }));
       setSocietyName("");
       showToast("You have left the society.");
-    } catch (err) {
-      console.error("Leave Error:", err);
-      showToast("Failed to leave society.", "error");
-    } finally {
-      setLeaving(false);
-    }
+    } catch (err) { console.error("Leave Error:", err); showToast("Failed to leave society.", "error"); }
+    finally { setLeaving(false); }
   };
 
   const handleLogout = async () => {
-    try {
-      await signOut(auth);
-      navigate("/");
-    } catch (error) {
-      console.error("Logout Error:", error);
-    }
+    try { await signOut(auth); navigate("/auth"); }
+    catch (error) { console.error("Logout Error:", error); }
   };
 
-  // Calculate CO2 offset (real calculation)
-  const calculateCO2Offset = (wasteKg) => {
-    return (wasteKg * 0.53).toFixed(2);
-  };
-
-  // Determine earned badges based on stats
+  const calculateCO2Offset = (wasteKg) => (wasteKg * 0.53).toFixed(2);
   const earnedBadgeIds = checkBadges(userData);
   const earnedBadges = BADGES.filter(b => earnedBadgeIds.includes(b.id));
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#F9FBF9]">
-        <div className="text-[#1A5C38] font-bold animate-pulse text-xl tracking-widest uppercase">Loading Profile...</div>
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#0a0a0a' }}>
+        <div className="font-bold animate-pulse text-xl tracking-widest uppercase" style={{ color: '#22c55e' }}>Loading Profile...</div>
       </div>
     );
   }
@@ -239,89 +163,71 @@ const Profile = () => {
   const userInitial = (user?.displayName || userData?.name || user?.email || "C")[0].toUpperCase();
 
   return (
-    <div className="min-h-screen bg-[#F9FBF9]">
+    <div className="min-h-screen" style={{ backgroundColor: '#0a0a0a' }}>
       <Sidebar />
       
       <div className="ml-64 p-10 min-h-screen max-w-6xl mx-auto">
         {/* Header Section */}
-        <div className="mb-12 animate-in fade-in slide-in-from-top-4 duration-700">
-          <div className="flex items-center gap-8 bg-white p-10 rounded-[40px] shadow-2xl shadow-black/5 border border-white relative overflow-hidden">
+        <div className="mb-12">
+          <div className="flex items-center gap-8 p-8 rounded-xl relative overflow-hidden" style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
             {/* Background Accent */}
-            <div className="absolute top-0 right-0 w-64 h-64 bg-[#1A5C38]/5 rounded-full -mr-32 -mt-32 blur-3xl"></div>
+            <div className="absolute top-0 right-0 w-64 h-64 rounded-full -mr-32 -mt-32 blur-3xl pointer-events-none" style={{ backgroundColor: 'rgba(34,197,94,0.06)' }}></div>
             
             {/* Avatar */}
             <div className="relative group">
-              <input 
-                type="file" 
-                ref={fileInputRef} 
-                className="hidden" 
-                accept="image/*" 
-                onChange={handleUploadDP} 
-              />
+              <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleUploadDP} />
               <div 
                 onClick={() => fileInputRef.current.click()}
-                className={`w-32 h-32 rounded-[32px] flex items-center justify-center text-white font-black shadow-xl shadow-[#1A5C38]/20 border-4 border-white shrink-0 relative z-10 overflow-hidden cursor-pointer transition-all duration-500 ${
-                  userData?.photoURL || user?.photoURL ? '' : 'bg-gradient-to-br from-[#1A5C38] to-[#2E8B57] text-5xl'
-                }`}
+                className="w-28 h-28 rounded-2xl flex items-center justify-center font-bold text-5xl shrink-0 relative z-10 overflow-hidden cursor-pointer transition-all duration-500"
+                style={userData?.photoURL || user?.photoURL 
+                  ? {} 
+                  : { background: 'linear-gradient(135deg, rgba(34,197,94,0.2), rgba(22,163,74,0.1))', color: '#22c55e', border: '2px solid rgba(34,197,94,0.2)' }
+                }
               >
                 {uploading ? (
-                  <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center z-20">
+                  <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center z-20">
                     <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                    <span className="text-[8px] uppercase tracking-tighter mt-1">Uploading</span>
+                    <span className="text-[8px] uppercase tracking-tighter mt-1 text-white">Uploading</span>
                   </div>
                 ) : (
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 flex items-center justify-center z-20 transition-all text-[10px] uppercase font-black tracking-widest opacity-0 group-hover:opacity-100">
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 flex items-center justify-center z-20 transition-all text-[10px] uppercase font-bold tracking-widest text-white opacity-0 group-hover:opacity-100">
                     Change
                   </div>
                 )}
-                
                 {userData?.photoURL || user?.photoURL ? (
                   <img src={userData?.photoURL || user?.photoURL} alt="Avatar" className="w-full h-full object-cover" />
-                ) : (
-                  userInitial
-                )}
+                ) : userInitial}
               </div>
             </div>
 
             <div className="flex-1 relative z-10">
               <div className="flex items-center justify-between">
                 <div>
-                  <h1 className="text-4xl font-black text-gray-900 tracking-tighter mb-1">
+                  <h1 className="text-3xl font-bold text-white tracking-tight mb-1">
                     {userData?.name || user?.displayName || "Composter"}
                   </h1>
-                  <div className="flex items-center gap-3">
-                    <p className="text-gray-400 font-bold uppercase text-[9px] tracking-widest flex items-center gap-2">
-                      {user?.email}
-                    </p>
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <p className="font-semibold uppercase text-[9px] tracking-widest" style={{ color: '#6b7280' }}>{user?.email}</p>
                     {userData?.societyId && (
                       <>
-                        <span className="w-1 h-1 bg-gray-200 rounded-full"></span>
-                        <p className="text-[#1A5C38] font-black uppercase text-[9px] tracking-widest flex items-center gap-1.5">
-                          🏢 {societyName || "Loading..."}
-                        </p>
-                        <span className="w-1 h-1 bg-gray-200 rounded-full"></span>
+                        <span className="w-1 h-1 rounded-full" style={{ backgroundColor: '#4b5563' }}></span>
+                        <p className="font-bold uppercase text-[9px] tracking-widest" style={{ color: '#22c55e' }}>🏢 {societyName || "Loading..."}</p>
+                        <span className="w-1 h-1 rounded-full" style={{ backgroundColor: '#4b5563' }}></span>
                         <div className="flex items-center gap-2 group/flat">
                           {isEditingFlat ? (
                             <div className="flex items-center gap-1">
-                              <input 
-                                value={tempFlat} 
-                                onChange={e => setTempFlat(e.target.value)}
-                                className="bg-[#F9FBF9] border border-gray-100 rounded px-2 py-0.5 text-[9px] font-black w-16 outline-none focus:border-[#1A5C38]"
+                              <input value={tempFlat} onChange={e => setTempFlat(e.target.value)}
+                                className="rounded px-2 py-0.5 text-[9px] font-bold w-16 outline-none text-white"
+                                style={{ backgroundColor: 'rgba(255,255,255,0.06)', border: '1px solid rgba(34,197,94,0.3)' }}
                                 autoFocus
                               />
-                              <button onClick={handleUpdateFlat} className="text-[#1A5C38] font-black text-[8px] hover:underline uppercase">Save</button>
+                              <button onClick={handleUpdateFlat} className="font-bold text-[8px] hover:underline uppercase" style={{ color: '#22c55e' }}>Save</button>
                             </div>
                           ) : (
                             <>
-                              <p className="text-gray-500 font-black uppercase text-[9px] tracking-widest">
-                                Flat: {userData?.flatNumber || "N/A"}
-                              </p>
-                              <button 
-                                onClick={() => setIsEditingFlat(true)}
-                                className="opacity-0 group-hover/flat:opacity-100 transition-all text-[8px] font-black uppercase tracking-widest text-[#1A5C38] hover:underline"
-                              >
-                                Edit
-                              </button>
+                              <p className="font-bold uppercase text-[9px] tracking-widest" style={{ color: '#6b7280' }}>Flat: {userData?.flatNumber || "N/A"}</p>
+                              <button onClick={() => setIsEditingFlat(true)}
+                                className="opacity-0 group-hover/flat:opacity-100 transition-all text-[8px] font-bold uppercase tracking-widest hover:underline" style={{ color: '#22c55e' }}>Edit</button>
                             </>
                           )}
                         </div>
@@ -329,29 +235,20 @@ const Profile = () => {
                     )}
                   </div>
                 </div>
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-3">
                   {userData?.societyId && (
-                    <button 
-                      onClick={handleLeaveSociety}
-                      disabled={leaving}
-                      className="px-6 py-3 rounded-2xl bg-white text-red-400 font-black text-[10px] uppercase tracking-widest hover:bg-red-50 transition-all border border-red-50 cursor-pointer disabled:opacity-50"
-                    >
-                      {leaving ? "Leaving..." : "Leave Building"}
-                    </button>
+                    <button onClick={handleLeaveSociety} disabled={leaving}
+                      className="px-5 py-2.5 rounded-lg font-bold text-[10px] uppercase tracking-widest transition-all cursor-pointer disabled:opacity-50"
+                      style={{ backgroundColor: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', color: '#ef4444' }}
+                    >{leaving ? "Leaving..." : "Leave Building"}</button>
                   )}
-                  <button 
-                    onClick={() => navigate('/edit-profile')}
-                    className="px-6 py-3 rounded-2xl bg-[#1A5C38] text-white font-black text-[10px] uppercase tracking-widest hover:bg-[#1A5C38]/90 transition-all shadow-lg shadow-green-900/10 cursor-pointer"
-                  >
-                    Manage Account
-                  </button>
                 </div>
               </div>
 
-              <div className="mt-6 flex gap-3">
-                <span className="px-4 py-1.5 bg-[#1A5C38]/10 text-[#1A5C38] rounded-full text-[10px] font-black uppercase tracking-widest"> Level {userData?.level || 1}</span>
+              <div className="mt-4 flex gap-2">
+                <span className="px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-widest" style={{ backgroundColor: 'rgba(34,197,94,0.12)', color: '#22c55e' }}>Level {userData?.level || 1}</span>
                 {earnedBadges.slice(0, 2).map((badge, index) => (
-                  <span key={index} className="px-4 py-1.5 bg-green-100 text-[#1A5C38] rounded-full text-[10px] font-black uppercase tracking-widest"> {badge.name}</span>
+                  <span key={index} className="px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-widest" style={{ backgroundColor: 'rgba(34,197,94,0.08)', color: '#22c55e' }}>{badge.name}</span>
                 ))}
               </div>
             </div>
@@ -366,13 +263,13 @@ const Profile = () => {
             { label: "Day Streak", value: userData?.streak ?? 0, sub: "Consecutive Days", icon: "🔥" },
             { label: "Waste Logged", value: (userData?.totalWasteKg ?? 0).toFixed(1), sub: "Kilograms", icon: "⚖️" }
           ].map((stat, i) => (
-            <div key={i} className="bg-white p-8 rounded-3xl border border-gray-100 shadow-xl shadow-black/5 hover:translate-y-[-4px] transition-all group">
+            <div key={i} className="p-6 rounded-xl hover:translate-y-[-4px] transition-all group" style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
               <div className="flex items-center justify-between mb-4">
-                <span className="text-gray-400 font-black text-[10px] uppercase tracking-widest">{stat.label}</span>
+                <span className="font-bold text-[10px] uppercase tracking-widest" style={{ color: '#6b7280' }}>{stat.label}</span>
                 <span className="text-xl grayscale group-hover:grayscale-0 transition-all">{stat.icon}</span>
               </div>
-              <p className="text-3xl font-black text-gray-900 tracking-tighter mb-1">{stat.value}</p>
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{stat.sub}</p>
+              <p className="text-3xl font-bold text-white tracking-tight mb-1">{stat.value}</p>
+              <p className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: '#4b5563' }}>{stat.sub}</p>
             </div>
           ))}
         </div>
@@ -380,55 +277,49 @@ const Profile = () => {
         {/* Impact & Progress */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Progress Card */}
-          <div className="lg:col-span-2 bg-white rounded-[40px] p-10 border border-gray-50 shadow-xl shadow-black/5">
-            <h2 className="text-2xl font-black text-gray-900 tracking-tight mb-8">Composting Journey</h2>
+          <div className="lg:col-span-2 rounded-xl p-8" style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+            <h2 className="text-xl font-bold text-white tracking-tight mb-8">Composting Journey</h2>
             <XPBar currentXP={userData?.xp ?? 0} nextLevelXP={1000} />
             
-            <div className="mt-12 flex justify-center pt-10 border-t border-gray-50">
+            <div className="mt-12 flex justify-center pt-10" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
                <div className="flex items-start gap-4 text-center mx-auto">
-                 <div className="w-16 h-16 rounded-[24px] bg-green-50 flex items-center justify-center text-[#1A5C38] text-2xl shadow-inner border border-green-100/50">🌳</div>
+                 <div className="w-14 h-14 rounded-xl flex items-center justify-center text-2xl" style={{ backgroundColor: 'rgba(34,197,94,0.12)' }}>🌳</div>
                  <div className="text-left">
-                   <p className="text-sm font-black text-gray-900 uppercase tracking-tight">Environmental Impact</p>
-                   <p className="text-3xl font-black text-[#1A5C38] tracking-tighter">{calculateCO2Offset(userData?.totalWasteKg ?? 0)} KG CO₂ Offset</p>
-                   <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Total Carbon footprint reduction from landfill diversion</p>
+                   <p className="text-sm font-bold text-white uppercase tracking-tight">Environmental Impact</p>
+                   <p className="text-2xl font-bold tracking-tight" style={{ color: '#22c55e' }}>{calculateCO2Offset(userData?.totalWasteKg ?? 0)} KG CO₂ Offset</p>
+                   <p className="text-[10px] font-semibold uppercase tracking-widest mt-1" style={{ color: '#6b7280' }}>Total carbon footprint reduction from landfill diversion</p>
                  </div>
                </div>
             </div>
           </div>
 
-          {/* Achievements (Real) */}
+          {/* Achievements */}
           <div className="flex flex-col gap-8">
-            <div className="bg-white rounded-[40px] p-8 border border-gray-50 shadow-xl shadow-black/5 flex-1 relative overflow-hidden">
-               <div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none drop-shadow-lg">
-                <span className="text-8xl">🏆</span>
-              </div>
-              <h2 className="text-lg font-black text-gray-900 tracking-tight mb-6 uppercase text-xs tracking-[0.2em] text-gray-400">Earned Badges</h2>
-              <div className="space-y-4">
+            <div className="rounded-xl p-6 flex-1 relative overflow-hidden" style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <h2 className="text-[10px] font-bold uppercase tracking-[0.2em] mb-6" style={{ color: '#6b7280' }}>Earned Badges</h2>
+              <div className="space-y-3">
                 {earnedBadges.length > 0 ? (
                   earnedBadges.slice(0, 3).map((badge, i) => (
                     <BadgeCard key={i} badge={badge} isUnlocked={true} />
                   ))
                 ) : (
-                  <div className="py-10 text-center border-2 border-dashed border-gray-100 rounded-3xl">
-                    <p className="text-gray-300 font-bold text-xs uppercase tracking-widest">No badges earned yet</p>
-                    <p className="text-[10px] text-gray-300 uppercase mt-1">Keep composting to unlock achievements!</p>
+                  <div className="py-10 text-center rounded-xl" style={{ border: '1px dashed rgba(255,255,255,0.1)' }}>
+                    <p className="font-bold text-xs uppercase tracking-widest" style={{ color: '#6b7280' }}>No badges earned yet</p>
+                    <p className="text-[10px] uppercase mt-1" style={{ color: '#4b5563' }}>Keep composting to unlock achievements!</p>
                   </div>
                 )}
               </div>
-              <button 
-                onClick={() => navigate('/badges')}
-                className="w-full mt-6 py-4 rounded-2xl font-black text-[#1A5C38] border-2 border-[#1A5C38]/10 hover:bg-[#1A5C38]/5 transition-all text-[10px] uppercase tracking-widest cursor-pointer"
-              >
-                View Full System
-              </button>
+              <button onClick={() => navigate('/badges')}
+                className="w-full mt-6 py-3 rounded-lg font-bold transition-all text-[10px] uppercase tracking-widest cursor-pointer"
+                style={{ backgroundColor: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', color: '#22c55e' }}
+              >View Full System</button>
             </div>
 
             {/* Logout & Account Settings */}
-            <div className="bg-white rounded-[40px] p-8 border border-gray-50 shadow-xl shadow-black/5 text-center">
-                <button 
-                  onClick={handleLogout}
-                  className="w-full py-5 rounded-2xl font-black text-white hover:scale-[1.02] transition-all duration-300 shadow-xl shadow-red-500/10 flex items-center justify-center gap-3 cursor-pointer"
-                  style={{ backgroundColor: '#EF4444' }}
+            <div className="rounded-xl p-6 text-center" style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                <button onClick={handleLogout}
+                  className="w-full py-4 rounded-lg font-bold text-white hover:scale-[1.02] transition-all duration-300 flex items-center justify-center gap-3 cursor-pointer"
+                  style={{ backgroundColor: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)', color: '#ef4444' }}
                 >
                   <span className="uppercase text-xs tracking-widest">End Session</span>
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5">
@@ -436,12 +327,10 @@ const Profile = () => {
                   </svg>
                 </button>
 
-                <button 
-                  onClick={handleDeleteAccount}
-                  className="w-full mt-4 py-3 rounded-2xl font-black text-red-300 hover:text-red-500 transition-all text-[10px] uppercase tracking-[0.2em] cursor-pointer"
-                >
-                  Delete Account
-                </button>
+                <button onClick={handleDeleteAccount}
+                  className="w-full mt-3 py-2 rounded-lg font-bold transition-all text-[10px] uppercase tracking-[0.2em] cursor-pointer"
+                  style={{ color: '#6b7280' }}
+                >Delete Account</button>
             </div>
           </div>
         </div>

@@ -38,7 +38,6 @@ const CreateSociety = () => {
         if (docSnap.exists()) {
           const data = docSnap.data();
           setUserData(data);
-          // Limit: If already has a society, redirect to Admin
           if (data.societyId) {
             navigate('/admin');
           }
@@ -52,7 +51,7 @@ const CreateSociety = () => {
   }, [navigate]);
 
   const geocodeAddress = async (address) => {
-    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address + ", Mumbai, India")}&limit=1`
+    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address + ", " + city + ", India")}&limit=1`
     try {
       const res = await fetch(url)
       const data = await res.json()
@@ -69,7 +68,6 @@ const CreateSociety = () => {
     return null
   }
 
-  // Map helper components
   const LocationMarker = () => {
     useMapEvents({
       click(e) {
@@ -116,10 +114,8 @@ const CreateSociety = () => {
     const code = Math.random().toString(36).substring(2, 8).toUpperCase();
 
     try {
-      // Use existing detected location or fetch again
       const location = detectedLocation || await geocodeAddress(name.trim() + " " + city.trim());
 
-      // 1. Create Society document
       const societyRef = await addDoc(collection(db, "societies"), {
         name: name.trim(),
         city: city.trim(),
@@ -135,15 +131,13 @@ const CreateSociety = () => {
       const newSocietyId = societyRef.id;
       setSocietyId(newSocietyId);
 
-      // 2. Create Invite document (using code as ID)
       await setDoc(doc(db, "invites", code), {
         societyId: newSocietyId,
         createdBy: uid,
         uses: 0,
-        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() // 30 days
+        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
       });
 
-      // 3. Update User role
       await updateDoc(doc(db, "users", uid), {
         role: "society_admin",
         societyId: newSocietyId,
@@ -151,11 +145,11 @@ const CreateSociety = () => {
       });
 
       setGeneratedCode(code);
-      showToast("Society Created Successfully! 🎉"); // Added success toast
+      showToast("Society Created Successfully! 🎉");
 
     } catch (err) {
       console.error("Create Error:", err);
-      showToast("Error creating society. Please try again.", "error"); // Replaced alert with showToast
+      showToast("Error creating society. Please try again.", "error");
     } finally {
       setLoading(false);
     }
@@ -163,60 +157,62 @@ const CreateSociety = () => {
 
   if (initialLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#F9FBF9]">
-        <div className="text-[#1A5C38] font-bold animate-pulse uppercase tracking-[0.2em]">Verifying Status...</div>
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#0a0a0a' }}>
+        <div className="font-bold animate-pulse text-xl tracking-widest uppercase text-[#22c55e]">Verifying Status...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#F9FBF9' }}>
+    <div className="min-h-screen" style={{ backgroundColor: '#0a0a0a' }}>
       <Sidebar />
       
-      <div className="ml-64 p-10 min-h-screen">
+      <div className="ml-64 p-10 min-h-screen max-w-5xl mx-auto">
         {/* Top Bar */}
-        <div className="flex justify-between items-end mb-10 border-b border-gray-100 pb-8">
+        <div className="flex justify-between items-end mb-10 pb-8" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
           <div>
-            <h1 className="text-4xl font-black text-gray-900 tracking-tighter uppercase">Establish Society</h1>
-            <p className="text-gray-400 font-bold mt-2 uppercase text-xs tracking-widest">Setup your building's composting cluster</p>
+            <h1 className="text-3xl font-bold text-white tracking-tight uppercase mb-1">Establish Society</h1>
+            <p className="font-semibold uppercase text-[10px] tracking-widest" style={{ color: '#6b7280' }}>Setup your building's composting cluster</p>
           </div>
           <button 
             onClick={() => navigate('/dashboard')}
-            className="px-6 py-3 rounded-2xl bg-white border border-gray-100 text-gray-400 font-black text-[10px] uppercase tracking-widest hover:bg-gray-50 transition-all cursor-pointer shadow-sm"
+            className="px-5 py-2.5 rounded-xl border font-bold text-[10px] uppercase tracking-widest transition-all cursor-pointer shadow-sm"
+            style={{ backgroundColor: 'rgba(255,255,255,0.04)', borderColor: 'rgba(255,255,255,0.1)', color: '#9ca3af' }}
           >
-            ← Back to Home
+            ← Back
           </button>
         </div>
 
         <div className="max-w-3xl mx-auto">
           {generatedCode ? (
-            <div className="bg-white p-12 rounded-[40px] shadow-xl shadow-black/5 border border-gray-50 text-center animate-in zoom-in-95 duration-500">
-              <div className="w-20 h-20 bg-green-100 rounded-[24px] flex items-center justify-center text-4xl mx-auto mb-8">🎉</div>
-              <h2 className="text-3xl font-black text-gray-900 tracking-tighter mb-2 uppercase text-[#1A5C38]">Society Created!</h2>
-              <p className="text-gray-400 font-bold text-xs uppercase tracking-widest mb-12">Building a greener community together</p>
+            <div className="p-12 rounded-2xl text-center animate-in zoom-in-95 duration-500" style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <div className="w-20 h-20 rounded-2xl flex items-center justify-center text-4xl mx-auto mb-8 grayscale" style={{ backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>🎉</div>
+              <h2 className="text-2xl font-bold text-white tracking-tight mb-2 uppercase">Society Established!</h2>
+              <p className="font-semibold text-[10px] uppercase tracking-widest mb-12" style={{ color: '#4b5563' }}>Building a greener community together</p>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
-                <div className="bg-[#F9FBF9] p-8 rounded-[32px] border border-gray-100 relative group flex flex-col items-center justify-center">
-                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">Invite Code</p>
-                  <p className="text-4xl font-black text-[#1A5C38] tracking-[0.3em] mb-4 bg-white px-6 py-3 rounded-2xl shadow-sm">{generatedCode}</p>
+                <div className="p-8 rounded-2xl border relative group flex flex-col items-center justify-center" style={{ backgroundColor: 'rgba(255,255,255,0.02)', borderColor: 'rgba(255,255,255,0.06)' }}>
+                  <p className="text-[9px] font-bold text-gray-500 uppercase tracking-widest mb-4">Invite Code</p>
+                  <p className="text-4xl font-bold tracking-[0.3em] mb-4 px-6 py-2 rounded-xl" style={{ backgroundColor: 'rgba(255,255,255,0.03)', color: '#22c55e' }}>{generatedCode}</p>
                   <button 
                       onClick={() => {
                           navigator.clipboard.writeText(generatedCode);
                           showToast("Code copied! 📋");
                       }}
-                      className="text-[10px] font-black text-[#2E8B57] uppercase tracking-widest hover:underline cursor-pointer"
+                      className="text-[9px] font-bold uppercase tracking-widest hover:underline cursor-pointer"
+                      style={{ color: '#16a34a' }}
                   >
                       Copy to Clipboard 📋
                   </button>
                 </div>
 
-                <div className="bg-[#F9FBF9] p-8 rounded-[32px] border border-gray-100 flex flex-col items-center justify-center">
-                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">Scan to Join</p>
-                  <div className="p-3 bg-white rounded-2xl shadow-sm border border-gray-50">
+                <div className="p-8 rounded-2xl border flex flex-col items-center justify-center" style={{ backgroundColor: 'rgba(255,255,255,0.02)', borderColor: 'rgba(255,255,255,0.06)' }}>
+                  <p className="text-[9px] font-bold text-gray-500 uppercase tracking-widest mb-4">Scan to Join</p>
+                  <div className="p-4 bg-white/5 rounded-xl border border-white/10">
                     <img 
-                      src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=COMPOSTMATE-${generatedCode}`} 
+                      src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=COMPOSTMATE-${generatedCode}&bgcolor=000&color=fff`} 
                       alt="QR Code"
-                      className="w-24 h-24"
+                      className="w-24 h-24 invert opacity-80"
                     />
                   </div>
                 </div>
@@ -224,48 +220,52 @@ const CreateSociety = () => {
 
               <button
                 onClick={() => navigate('/admin')}
-                className="w-full py-5 rounded-2xl bg-[#1A5C38] text-white font-black text-xs uppercase tracking-[0.2em] shadow-xl shadow-[#1A5C38]/20 hover:scale-[1.02] active:scale-95 transition-all cursor-pointer"
+                className="w-full py-5 rounded-xl font-bold text-xs uppercase tracking-[0.2em] transition-all cursor-pointer"
+                style={{ background: 'linear-gradient(to bottom, #22c55e, #16a34a)', color: 'white', boxShadow: '0 8px 32px rgba(34,197,94,0.3)' }}
               >
                 Go to Admin Dashboard →
               </button>
             </div>
           ) : (
-            <div className="bg-white p-12 rounded-[40px] shadow-xl shadow-black/5 border border-gray-50 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <div className="p-12 rounded-2xl animate-in fade-in slide-in-from-bottom-4 duration-700" style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
               <div className="text-center mb-10">
-                <div className="w-16 h-16 bg-[#1A5C38]/10 rounded-[20px] flex items-center justify-center text-3xl mx-auto mb-6">🏘️</div>
-                <h2 className="text-2xl font-black text-gray-900 tracking-tighter uppercase">Society Details</h2>
-                <p className="text-gray-400 font-bold text-[10px] uppercase tracking-widest mt-2">Initialize your building's composting cluster</p>
+                <div className="w-16 h-16 rounded-xl flex items-center justify-center text-3xl mx-auto mb-6 grayscale" style={{ backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>🏘️</div>
+                <h2 className="text-2xl font-bold text-white tracking-tight uppercase">Society Details</h2>
+                <p className="font-semibold text-[10px] uppercase tracking-widest mt-2" style={{ color: '#4b5563' }}>Initialize your building's composting cluster</p>
               </div>
 
               <form onSubmit={handleCreate} className="space-y-8">
                 <div>
-                  <label className="block text-[10px] font-black text-gray-400 mb-3 uppercase tracking-widest ml-1">Society Name</label>
+                  <label className="block text-[9px] font-bold text-gray-600 mb-3 uppercase tracking-widest ml-1">Society Name</label>
                   <input
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="e.g. Green Heights Residency"
-                    className="w-full bg-[#F9FBF9] border-2 border-gray-100 rounded-2xl px-6 py-5 text-sm font-bold text-gray-800 placeholder-gray-300 focus:border-[#1A5C38] focus:ring-0 transition-all outline-none"
+                    className="w-full rounded-xl px-6 py-4 text-sm font-bold text-white placeholder-gray-800 outline-none transition-all"
+                    style={{ backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)' }}
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[10px] font-black text-gray-400 mb-3 uppercase tracking-widest ml-1">City</label>
+                  <label className="block text-[9px] font-bold text-gray-600 mb-3 uppercase tracking-widest ml-1">City</label>
                   <div className="flex gap-4">
                     <input
                       type="text"
                       value={city}
                       onChange={(e) => setCity(e.target.value)}
                       placeholder="e.g. Mumbai"
-                      className="flex-1 bg-[#F9FBF9] border-2 border-gray-50 rounded-2xl px-6 py-5 text-sm font-bold text-gray-800 placeholder-gray-300 focus:border-[#1A5C38] focus:ring-0 transition-all outline-none"
+                      className="flex-1 rounded-xl px-6 py-4 text-sm font-bold text-white placeholder-gray-800 outline-none transition-all"
+                      style={{ backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)' }}
                       required
                     />
                     <button
                       type="button"
                       onClick={handleVerifyLocation}
                       disabled={verifyingLocation || !name || !city}
-                      className="px-6 rounded-2xl bg-white border-2 border-gray-100 text-[10px] font-black uppercase text-[#1A5C38] hover:bg-gray-50 transition-all shadow-sm disabled:opacity-50 cursor-pointer"
+                      className="px-6 rounded-xl border font-bold text-[9px] uppercase tracking-widest transition-all shadow-sm disabled:opacity-50 cursor-pointer"
+                      style={{ backgroundColor: 'rgba(255,255,255,0.04)', borderColor: 'rgba(255,255,255,0.1)', color: '#22c55e' }}
                     >
                       {verifyingLocation ? "..." : "Verify 📍"}
                     </button>
@@ -274,23 +274,23 @@ const CreateSociety = () => {
 
                 {detectedLocation && (
                   <div className="space-y-4">
-                    <div className="p-4 bg-green-50 border border-green-100 rounded-2xl animate-in fade-in slide-in-from-left-2 duration-500">
-                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Impact Point Found</p>
-                      <p className="text-[10px] font-bold text-[#1A5C38] leading-relaxed">
+                    <div className="p-5 rounded-xl animate-in fade-in slide-in-from-left-2 duration-500 border" style={{ backgroundColor: 'rgba(34,197,94,0.05)', borderColor: 'rgba(34,197,94,0.1)' }}>
+                      <p className="text-[9px] font-bold text-gray-500 uppercase tracking-widest mb-1">Impact Point Found</p>
+                      <p className="text-[10px] font-bold text-[#22c55e] leading-relaxed">
                         {detectedLocation.formattedAddress}
                       </p>
-                      <p className="text-[8px] font-black text-gray-300 uppercase mt-2">Adjust position by clicking on the map below</p>
+                      <p className="text-[8px] font-bold text-gray-600 uppercase mt-2">Adjust position by clicking on the map below</p>
                     </div>
 
-                    <div className="h-64 w-full rounded-3xl overflow-hidden border-2 border-gray-100 shadow-inner relative z-10">
+                    <div className="h-64 w-full rounded-2xl overflow-hidden border relative z-10" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
                       <MapContainer
                         center={[detectedLocation.lat, detectedLocation.lng]}
                         zoom={14}
                         style={{ height: "100%", width: "100%" }}
                       >
                         <TileLayer
-                          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+                          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
                         />
                         <LocationMarker />
                         <ChangeMapView center={[detectedLocation.lat, detectedLocation.lng]} />
@@ -300,13 +300,14 @@ const CreateSociety = () => {
                 )}
 
                 <div>
-                  <label className="block text-[10px] font-black text-gray-400 mb-3 uppercase tracking-widest ml-1">Your Flat Number</label>
+                  <label className="block text-[9px] font-bold text-gray-600 mb-3 uppercase tracking-widest ml-1">Your Flat Number</label>
                   <input
                     type="text"
                     value={flatNumber}
                     onChange={(e) => setFlatNumber(e.target.value)}
                     placeholder="e.g. B-402"
-                    className="w-full bg-[#F9FBF9] border-2 border-gray-100 rounded-2xl px-6 py-5 text-sm font-bold text-gray-800 placeholder-gray-300 focus:border-[#1A5C38] focus:ring-0 transition-all outline-none"
+                    className="w-full rounded-xl px-6 py-4 text-sm font-bold text-white placeholder-gray-800 outline-none transition-all"
+                    style={{ backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)' }}
                     required
                   />
                 </div>
@@ -315,14 +316,15 @@ const CreateSociety = () => {
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full py-5 rounded-2xl bg-[#1A5C38] text-white font-black text-xs uppercase tracking-[0.2em] shadow-xl shadow-[#1A5C38]/20 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 cursor-pointer"
+                    className="w-full py-5 rounded-xl font-bold text-xs uppercase tracking-[0.2em] transition-all disabled:opacity-50 cursor-pointer"
+                    style={{ background: 'linear-gradient(to bottom, #22c55e, #16a34a)', color: 'white', boxShadow: '0 8px 32px rgba(34,197,94,0.3)' }}
                   >
                     {loading ? "Establishing Cluster..." : "Establish Society 🏗️"}
                   </button>
                 </div>
               </form>
 
-              <p className="text-center text-[9px] text-gray-300 font-bold uppercase tracking-widest mt-10 px-8 leading-relaxed">
+              <p className="text-center text-[8px] font-bold uppercase tracking-widest mt-10 px-8 leading-relaxed" style={{ color: '#2d2d2d' }}>
                   By establishing a society, you agree to manage the composting lifecycle registry for your building residents.
               </p>
             </div>

@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import LandingPage from "./screens/LandingPage";
 import Auth from "./screens/Auth";
 import Chat from "./screens/Chat";
 import Dashboard from "./screens/Dashboard";
@@ -24,7 +25,8 @@ function App() {
     <Router>
       <NotificationProvider>
         <Routes>
-        <Route path="/" element={<Auth />} />
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/auth" element={<Auth />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/chat" element={<Chat />} />
         <Route path="/log" element={<Logger />} />

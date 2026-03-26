@@ -15,7 +15,7 @@ const JoinSociety = () => {
   const [success, setSuccess] = useState("");
   const navigate = useNavigate();
 
-  React.useEffect(() => {
+  useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         const docSnap = await getDoc(doc(db, "users", user.uid));
@@ -43,7 +43,6 @@ const JoinSociety = () => {
     const code = inviteCode.toUpperCase().trim();
 
     try {
-      // 1. Check if invite exists
       const inviteRef = doc(db, "invites", code);
       const inviteSnap = await getDoc(inviteRef);
 
@@ -55,7 +54,6 @@ const JoinSociety = () => {
 
       const { societyId } = inviteSnap.data();
 
-      // 2. Check if flat number is already taken in THIS society
       const usersRef = collection(db, "users");
       const flatQuery = query(
         usersRef, 
@@ -70,24 +68,20 @@ const JoinSociety = () => {
         return;
       }
 
-      // 3. Get Society Name for the success message
       const societyRef = doc(db, "societies", societyId);
       const societySnap = await getDoc(societyRef);
       const societyName = societySnap.exists() ? societySnap.data().name : "the society";
 
-      // 3. Update User
       const userRef = doc(db, "users", auth.currentUser.uid);
       await updateDoc(userRef, { 
         societyId,
         flatNumber: flatNumber.trim()
       });
 
-      // 4. Update Society memberIds
       await updateDoc(societyRef, {
         memberIds: arrayUnion(auth.currentUser.uid)
       });
 
-      // 5. Increment Invite uses
       await updateDoc(inviteRef, {
         uses: increment(1)
       });
@@ -108,48 +102,49 @@ const JoinSociety = () => {
 
   if (initialLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#F9FBF9]">
-        <div className="text-[#1A5C38] font-bold animate-pulse uppercase tracking-[0.2em]">Verifying Status...</div>
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#0a0a0a' }}>
+        <div className="font-bold animate-pulse text-xl tracking-widest uppercase text-[#22c55e]">Verifying Status...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#F9FBF9' }}>
+    <div className="min-h-screen" style={{ backgroundColor: '#0a0a0a' }}>
       <Sidebar />
       
-      <div className="ml-64 p-10 min-h-screen">
+      <div className="ml-64 p-10 min-h-screen max-w-5xl mx-auto">
         {/* Top Bar */}
-        <div className="flex justify-between items-end mb-10 border-b border-gray-100 pb-8">
+        <div className="flex justify-between items-end mb-10 pb-8" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
           <div>
-            <h1 className="text-4xl font-black text-gray-900 tracking-tighter uppercase">Join Society</h1>
-            <p className="text-gray-400 font-bold mt-2 uppercase text-xs tracking-widest">Connect with your building community</p>
+            <h1 className="text-3xl font-bold text-white tracking-tight uppercase mb-1">Join Society</h1>
+            <p className="font-semibold uppercase text-[10px] tracking-widest" style={{ color: '#6b7280' }}>Connect with your building community</p>
           </div>
           <button 
             onClick={() => navigate('/dashboard')}
-            className="px-6 py-3 rounded-2xl bg-white border border-gray-100 text-gray-400 font-black text-[10px] uppercase tracking-widest hover:bg-gray-50 transition-all cursor-pointer shadow-sm"
+            className="px-5 py-2.5 rounded-xl border font-bold text-[10px] uppercase tracking-widest transition-all cursor-pointer shadow-sm"
+            style={{ backgroundColor: 'rgba(255,255,255,0.04)', borderColor: 'rgba(255,255,255,0.1)', color: '#9ca3af' }}
           >
-            ← Back to Home
+            ← Back
           </button>
         </div>
 
-        <div className="max-w-2xl mx-auto">
-          <div className="bg-white rounded-[40px] shadow-xl shadow-black/5 p-12 border border-gray-50 text-center animate-in fade-in slide-in-from-bottom-4 duration-700">
-            <div className="w-20 h-20 bg-[#1A5C38]/10 rounded-[24px] flex items-center justify-center text-4xl mx-auto mb-8">🏢</div>
+        <div className="max-w-xl mx-auto mt-20">
+          <div className="p-12 rounded-2xl text-center animate-in fade-in slide-in-from-bottom-4 duration-700" style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+            <div className="w-20 h-20 rounded-2xl flex items-center justify-center text-4xl mx-auto mb-8 grayscale" style={{ backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>🏢</div>
             
-            <h2 className="text-3xl font-black text-gray-900 tracking-tighter mb-2 uppercase">Enter Invite Code</h2>
-            <p className="text-gray-400 font-bold text-xs uppercase tracking-widest mb-10 leading-relaxed max-w-[280px] mx-auto">
+            <h2 className="text-2xl font-bold text-white tracking-tight mb-2 uppercase">Enter Invite Code</h2>
+            <p className="font-semibold text-[10px] uppercase tracking-widest mb-10 leading-relaxed max-w-[280px] mx-auto" style={{ color: '#4b5563' }}>
               Provided by your building secretary
             </p>
 
             {error && (
-              <div className="mb-8 p-4 bg-red-50 border border-red-100 rounded-2xl text-red-600 text-[10px] font-black uppercase tracking-widest animate-pulse">
+              <div className="mb-8 p-4 rounded-xl text-red-500 text-[10px] font-bold uppercase tracking-widest animate-pulse" style={{ backgroundColor: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)' }}>
                 ⚠️ {error}
               </div>
             )}
 
             {success && (
-              <div className="mb-8 p-4 bg-green-50 border border-green-100 rounded-2xl text-[#1A5C38] text-[10px] font-black uppercase tracking-widest">
+              <div className="mb-8 p-4 rounded-xl text-[#22c55e] text-[10px] font-bold uppercase tracking-widest" style={{ backgroundColor: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.2)' }}>
                 {success}
               </div>
             )}
@@ -161,7 +156,8 @@ const JoinSociety = () => {
                 onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
                 maxLength={6}
                 placeholder="INVITE CODE"
-                className="w-full bg-[#F9FBF9] border-2 border-gray-100 rounded-3xl px-6 py-5 text-2xl font-black text-center text-[#1A5C38] placeholder-gray-200 tracking-[0.3em] focus:border-[#1A5C38] focus:ring-0 transition-all outline-none shadow-inner"
+                className="w-full rounded-xl px-6 py-5 text-3xl font-bold text-center placeholder-gray-800 tracking-[0.3em] outline-none transition-all"
+                style={{ backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', color: '#22c55e' }}
                 required
                 disabled={loading || success}
               />
@@ -171,7 +167,8 @@ const JoinSociety = () => {
                 value={flatNumber}
                 onChange={(e) => setFlatNumber(e.target.value)}
                 placeholder="FLAT NO. (E.G. A-101)"
-                className="w-full bg-[#F9FBF9] border-2 border-gray-100 rounded-2xl px-6 py-4 text-sm font-bold text-center text-gray-800 placeholder-gray-300 focus:border-[#1A5C38] focus:ring-0 transition-all outline-none"
+                className="w-full rounded-xl px-6 py-4 text-sm font-bold text-center text-white placeholder-gray-700 outline-none transition-all"
+                style={{ backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)' }}
                 required
                 disabled={loading || success}
               />
@@ -179,29 +176,31 @@ const JoinSociety = () => {
               <button
                 type="submit"
                 disabled={loading || success || inviteCode.length < 3}
-                className="w-full py-5 rounded-2xl bg-[#1A5C38] text-white font-black text-xs uppercase tracking-[0.2em] shadow-xl shadow-[#1A5C38]/20 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                className="w-full py-5 rounded-xl font-bold text-xs uppercase tracking-[0.2em] transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                style={{ background: 'linear-gradient(to bottom, #22c55e, #16a34a)', color: 'white', boxShadow: '0 8px 32px rgba(34,197,94,0.3)' }}
               >
                 {loading ? "Confirming..." : "Join Society 🚀"}
               </button>
             </form>
 
             <div className="my-10 flex items-center gap-4">
-              <div className="flex-1 h-px bg-gray-100"></div>
-              <span className="text-[10px] text-gray-200 font-bold uppercase tracking-widest">OR</span>
-              <div className="flex-1 h-px bg-gray-100"></div>
+              <div className="flex-1 h-px" style={{ backgroundColor: 'rgba(255,255,255,0.06)' }}></div>
+              <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: '#2d2d2d' }}>OR</span>
+              <div className="flex-1 h-px" style={{ backgroundColor: 'rgba(255,255,255,0.06)' }}></div>
             </div>
 
-            <button className="w-full py-4 rounded-xl border-2 border-gray-100 text-gray-400 font-black text-[10px] uppercase tracking-widest hover:bg-gray-50 transition-all flex items-center justify-center gap-3">
+            <button className="w-full py-4 rounded-xl border font-bold text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-3 cursor-pointer" style={{ backgroundColor: 'rgba(255,255,255,0.02)', borderColor: 'rgba(255,255,255,0.06)', color: '#4b5563' }}>
               📸 Scan QR Code
             </button>
 
-            <div className="mt-12 pt-10 border-t border-gray-50">
-              <p className="text-gray-400 font-bold text-[10px] uppercase tracking-widest">
+            <div className="mt-12 pt-10" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+              <p className="font-bold text-[10px] uppercase tracking-widest" style={{ color: '#4b5563' }}>
                 Secretary? Setup your building
               </p>
               <button 
                 onClick={() => navigate('/create-society')}
-                className="text-[#1A5C38] font-black text-[10px] uppercase tracking-[0.2em] mt-3 block mx-auto hover:underline cursor-pointer"
+                className="font-bold text-[10px] uppercase tracking-[0.2em] mt-3 block mx-auto hover:underline cursor-pointer"
+                style={{ color: '#22c55e' }}
               >
                 Establish New Society →
               </button>

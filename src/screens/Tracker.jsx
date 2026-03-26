@@ -3,6 +3,7 @@ import Sidebar from "../components/Sidebar";
 import { useBin } from "../hooks/useBin";
 import MaturityCircle from "../components/MaturityCircle";
 import { auth, db } from "../lib/firebase";
+import { doc, updateDoc } from "firebase/firestore";
 import { useNotification } from "../context/NotificationContext";
 
 const Tracker = () => {
@@ -37,26 +38,27 @@ const Tracker = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#F9FBF9] pb-20">
+    <div className="min-h-screen pb-20" style={{ backgroundColor: '#0a0a0a' }}>
       <Sidebar />
       <div className="ml-64 p-10 min-h-screen max-w-5xl mx-auto">
         <div className="mb-12">
-          <h1 className="text-[32px] font-black text-[#1A5C38] tracking-tighter uppercase">Maturity Tracker</h1>
-          <p className="text-gray-400 font-bold mt-2 uppercase text-xs tracking-[0.2em]">Monitor your active compost batches and lifecycle</p>
+          <h1 className="text-3xl font-bold text-white tracking-tight uppercase">Maturity Tracker</h1>
+          <p className="mt-2 text-xs font-semibold uppercase tracking-widest" style={{ color: '#6b7280' }}>Monitor your active compost batches and lifecycle</p>
         </div>
 
         {loading ? (
           <div className="flex items-center justify-center h-64">
-            <div className="text-[#1A5C38] font-bold animate-pulse uppercase tracking-widest">Scanning Bins...</div>
+            <div className="font-bold animate-pulse uppercase tracking-widest text-[#22c55e]">Scanning Bins...</div>
           </div>
         ) : logs.length === 0 ? (
-          <div className="bg-white p-20 rounded-[40px] border-2 border-dashed border-gray-100 text-center">
-            <span className="text-6xl block mb-6">🗑️</span>
-            <h2 className="text-2xl font-black text-gray-900 mb-2">No Active Bins</h2>
-            <p className="text-gray-400 font-bold uppercase text-[10px] tracking-widest mb-8">Start your composting journey today!</p>
+          <div className="p-20 rounded-2xl border-2 border-dashed text-center" style={{ backgroundColor: 'rgba(255,255,255,0.02)', borderColor: 'rgba(255,255,255,0.05)' }}>
+            <span className="text-6xl block mb-6 grayscale opacity-40">🗑️</span>
+            <h2 className="text-xl font-bold text-white mb-2 uppercase">No Active Bins</h2>
+            <p className="font-semibold uppercase text-[10px] tracking-widest mb-10" style={{ color: '#6b7280' }}>Start your composting journey today!</p>
             <button 
               onClick={() => window.location.href = '/log'}
-              className="px-8 py-4 bg-[#1A5C38] text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:scale-105 transition-all shadow-xl shadow-green-500/10"
+              className="px-10 py-5 rounded-xl font-bold text-xs uppercase tracking-widest hover:scale-105 transition-all cursor-pointer"
+              style={{ background: 'linear-gradient(to bottom, #22c55e, #16a34a)', color: 'white', boxShadow: '0 8px 32px rgba(34,197,94,0.3)' }}
             >
               Log First Batch 🚀
             </button>
@@ -64,12 +66,14 @@ const Tracker = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {logs.map((batch) => (
-              <div key={batch.id} className="bg-white p-8 rounded-[40px] border border-gray-50 shadow-xl shadow-black/5 hover:translate-y-[-4px] transition-all relative overflow-hidden group">
+              <div key={batch.id} className="p-8 rounded-2xl transition-all relative overflow-hidden group" style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
                 {/* Status Indicator */}
-                <div className={`absolute top-0 right-0 px-6 py-2 rounded-bl-3xl font-black text-[10px] uppercase tracking-widest ${
-                  batch.maturityProgress >= 100 ? 'bg-green-100 text-green-700' : 'bg-[#1A5C38]/10 text-[#1A5C38]'
-                }`}>
-                  {batch.maturityProgress >= 100 ? '✨ Ready to Use' : '⏳ Processing'}
+                <div className={`absolute top-0 right-0 px-5 py-2 rounded-bl-xl font-bold text-[9px] uppercase tracking-widest ${
+                  batch.maturityProgress >= 100 ? 'text-[#22c55e]' : 'text-gray-400'
+                }`}
+                style={{ backgroundColor: 'rgba(255,255,255,0.03)', borderBottom: '1px solid rgba(255,255,255,0.06)', borderLeft: '1px solid rgba(255,255,255,0.06)' }}
+                >
+                  {batch.maturityProgress >= 100 ? '✨ READY' : '⏳ PROCESSING'}
                 </div>
 
                 <div className="flex items-start gap-8">
@@ -77,34 +81,36 @@ const Tracker = () => {
                   
                   <div className="flex-1 pt-2">
                     <div className="flex items-center justify-between mb-1">
-                      <h3 className="text-xl font-black text-gray-900 tracking-tight">{batch.name}</h3>
+                      <h3 className="text-xl font-bold text-white tracking-tight">{batch.name}</h3>
                       <button 
                         onClick={() => handleEditName(batch.id, batch.name)}
-                        className="p-2 hover:bg-gray-100 rounded-xl transition-all group/edit"
+                        className="p-2 hover:bg-white/5 rounded-lg transition-all group/edit"
                         title="Edit Name"
                       >
-                        <span className="text-xs grayscale group-hover/edit:grayscale-0 transition-all opacity-40 group-hover/edit:opacity-100">✏️</span>
+                        <span className="text-xs grayscale group-hover/edit:grayscale-0 transition-all opacity-20 group-hover/edit:opacity-100">✏️</span>
                       </button>
                     </div>
-                    <p className="text-gray-400 font-bold text-[10px] uppercase tracking-widest mb-4">
-                      Logged {new Date(batch.timestamp).toLocaleDateString()}
+                    <p className="font-bold text-[10px] uppercase tracking-widest mb-5" style={{ color: '#4b5563' }}>
+                      {new Date(batch.timestamp).toLocaleDateString()}
                     </p>
                     
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Weight</span>
-                        <span className="text-sm font-black text-gray-900">{batch.totalKg.toFixed(1)} KG</span>
+                        <span className="text-[9px] font-bold uppercase tracking-widest" style={{ color: '#6b7280' }}>Weight</span>
+                        <span className="text-sm font-bold text-white">{batch.totalKg.toFixed(1)} KG</span>
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">C:N Ratio</span>
-                        <span className="text-sm font-black text-[#1A5C38]">{batch.cnRatio?.toFixed(1) || 'N/A'}</span>
+                        <span className="text-[9px] font-bold uppercase tracking-widest" style={{ color: '#6b7280' }}>C:N Ratio</span>
+                        <span className="text-sm font-bold" style={{ color: '#22c55e' }}>{batch.cnRatio?.toFixed(1) || 'N/A'}</span>
                       </div>
                     </div>
 
                     <div className="mt-6 flex gap-2">
-                       <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest ${
-                         batch.verified ? 'bg-green-50 text-green-600' : 'bg-gray-50 text-gray-400'
-                       }`}>
+                       <span className={`px-3 py-1 rounded-lg text-[8px] font-bold uppercase tracking-widest ${
+                         batch.verified ? 'text-[#22c55e]' : 'text-gray-500'
+                       }`}
+                       style={{ backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
+                       >
                          {batch.verified ? 'Verified Photo' : 'Manual Entry'}
                        </span>
                     </div>

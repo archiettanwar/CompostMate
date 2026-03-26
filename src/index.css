@@ -1,33 +1,62 @@
 @import "tailwindcss";
 
 @theme {
-  --color-primary: #1A5C38;
-  --color-secondary: #2E8B57;
+  --color-primary: #22c55e;
+  --color-primary-dark: #16a34a;
+  --color-primary-muted: rgba(34, 197, 94, 0.15);
   --color-accent: #F4A300;
-  --color-bg: #F9FBF9;
-  --color-surface: #FFFFFF;
-  --color-text-primary: #2D2D2D;
-  --color-text-secondary: #555555;
-  --color-success: #4CAF50;
-  --color-warning: #FF9800;
-  --color-danger: #F44336;
+  --color-bg: #0a0a0a;
+  --color-surface: #111111;
+  --color-surface-light: #1a1a1a;
+  --color-border: rgba(255, 255, 255, 0.08);
+  --color-border-hover: rgba(255, 255, 255, 0.15);
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #9ca3af;
+  --color-text-muted: #6b7280;
+  --color-success: #22c55e;
+  --color-warning: #f59e0b;
+  --color-danger: #ef4444;
 }
 
 :root {
-  --color-primary: #1A5C38;
-  --color-secondary: #2E8B57;
+  --color-primary: #22c55e;
+  --color-primary-dark: #16a34a;
+  --color-primary-muted: rgba(34, 197, 94, 0.15);
   --color-accent: #F4A300;
-  --color-bg: #F9FBF9;
-  --color-surface: #FFFFFF;
-  --color-text-primary: #2D2D2D;
-  --color-text-secondary: #555555;
-  --color-success: #4CAF50;
-  --color-warning: #FF9800;
-  --color-danger: #F44336;
+  --color-bg: #0a0a0a;
+  --color-surface: #111111;
+  --color-surface-light: #1a1a1a;
+  --color-border: rgba(255, 255, 255, 0.08);
+  --color-border-hover: rgba(255, 255, 255, 0.15);
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #9ca3af;
+  --color-text-muted: #6b7280;
+  --color-success: #22c55e;
+  --color-warning: #f59e0b;
+  --color-danger: #ef4444;
 }
+
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap');
 
 body {
   background-color: var(--color-bg);
   color: var(--color-text-primary);
-  font-family: Inter, Arial, sans-serif;
+  font-family: 'Poppins', Inter, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom scrollbar for dark theme */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
 }
