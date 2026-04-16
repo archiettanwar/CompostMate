@@ -1,16 +1,50 @@
-# React + Vite
+# CompostMate
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## Project Description
+CompostMate is an innovative application designed to help individuals and communities manage their composting process effectively. This application provides users with resources, tracking tools, and a community forum to enhance their composting experience.
 
-Currently, two official plugins are available:
+## Features
+- **User-Friendly Interface**: Designed for ease of use, even for beginners.
+- **Tracking System**: Monitor composting progress and conditions.
+- **Educational Resources**: Access articles, videos, and tips on best composting practices.
+- **Community Forum**: Connect with other composters to share experiences and advice.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Getting Started
+1. **Clone the repository**:  
+   `git clone https://github.com/archiettanwar/CompostMate.git`
+2. **Navigate to the project directory**:  
+   `cd CompostMate`
+3. **Install dependencies**:  
+   `npm install`
+4. **Run the application**:  
+   `npm start`
 
-## React Compiler
+## Tech Stack
+- **Frontend**: React, Redux
+- **Backend**: Node.js, Express
+- **Database**: MongoDB
+- **Styling**: CSS, Bootstrap
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Project Structure
+```
+CompostMate/
+│
+├── src/
+│   ├── components/  
+│   ├── pages/  
+��   ├── styles/  
+│   └── utils/  
+├── public/  
+├── .env
+├── package.json
+└── README.md
+```
 
-## Expanding the ESLint configuration
+## Contributing
+We welcome contributions from the community! Please check out our [Contributing Guide](CONTRIBUTING.md) for more information.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## License
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Acknowledgments
+Thank you to all the contributors and supporters who help make CompostMate a reality!
