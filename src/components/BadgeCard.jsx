@@ -1,14 +1,14 @@
 import React from 'react';
 
-const BadgeCard = ({ badge, isUnlocked = false }) => {
+const BadgeCard = ({ badge, isUnlocked = false, isHighlighted = false }) => {
   return (
     <div className={`p-4 rounded-xl transition-all duration-300 flex items-center gap-4 ${
       isUnlocked 
         ? 'opacity-100' 
         : 'grayscale opacity-40'
-    }`}
+    } ${isHighlighted ? 'ring-4 ring-[#22c55e] animate-pulse scale-105' : ''}`}
     style={isUnlocked 
-      ? { backgroundColor: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.15)' }
+      ? { backgroundColor: 'rgba(34,197,94,0.08)', border: isHighlighted ? '1px solid #22c55e' : '1px solid rgba(34,197,94,0.15)' }
       : { backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }
     }>
       <div className={`w-12 h-12 rounded-lg flex items-center justify-center text-2xl`}

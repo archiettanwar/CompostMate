@@ -16,6 +16,7 @@ import JoinSociety from "./screens/JoinSociety";
 import CreateSociety from "./screens/CreateSociety";
 import AdminDashboard from "./screens/AdminDashboard";
 import MyPerks from "./screens/MyPerks";
+import Notifications from "./screens/Notifications";
 import './App.css'
 
 import { NotificationProvider } from "./context/NotificationContext";
@@ -42,6 +43,7 @@ function App() {
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/perks" element={<MyPerks />} />
         <Route path="/my-society" element={<MySociety />} />
+        <Route path="/notifications" element={<Notifications />} />
       </Routes>
       </NotificationProvider>
     </Router>

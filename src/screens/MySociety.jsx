@@ -93,7 +93,7 @@ const MySociety = () => {
   return (
     <div className="min-h-screen flex" style={{ backgroundColor: '#0a0a0a' }}>
       <Sidebar />
-      <div className="flex-1 ml-64 p-10 max-w-7xl mx-auto">
+      <div className="flex-1 ml-64 p-10">
         {/* HEADER */}
         <div className="rounded-3xl p-12 mb-10 text-white relative overflow-hidden" style={{ background: 'linear-gradient(135deg, rgba(34,197,94,0.15) 0%, rgba(22,163,74,0.08) 100%)', border: '1px solid rgba(34,197,94,0.2)' }}>
           <div className="relative z-10">

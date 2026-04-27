@@ -119,7 +119,7 @@ const Leaderboard = () => {
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#0a0a0a' }}>
       <Sidebar />
-      <div className="ml-64 p-10 min-h-screen max-w-7xl mx-auto">
+      <div className="ml-64 p-10 min-h-screen">
         
         {/* Header Section */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 gap-6 pb-8" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>

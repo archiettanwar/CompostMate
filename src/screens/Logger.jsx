@@ -7,6 +7,7 @@ import { analyzeCompostImage } from "../lib/gemini";
 import Sidebar from "../components/Sidebar";
 import { calculateCNRatio, calculateMaturity, getCNFeedback } from "../lib/algorithms.js";
 import { useNotification } from "../context/NotificationContext";
+import { useBin } from "../hooks/useBin";
 
 const Tooltip = ({ text }) => {
   const [visible, setVisible] = useState(false);
@@ -37,6 +38,9 @@ const Logger = () => {
   const [logging, setLogging] = useState(false);
   const { showToast } = useNotification();
   const navigate = useNavigate();
+  const { logs: bins } = useBin();
+  const activeBins = bins?.filter(b => b.status === "filling") || [];
+  const [selectedBinId, setSelectedBinId] = useState("new");
 
   useEffect(() => {
     if (analysisResult?.description && !batchName) {
@@ -87,21 +91,48 @@ const Logger = () => {
       const totalWeight = Number(greens) + Number(browns);
       const xpEarned = Math.round(totalWeight * 20); // 20 XP per KG
       
-      const userRef = doc(db, "users", user.uid);
-      
-      // 1. Create a NEW batch log entry
-      const logRef = collection(db, "users", user.uid, "logs");
-      await addDoc(logRef, {
+      let targetBinRef;
+
+      // 1. Resolve Target Bin (Existing or New)
+      if (selectedBinId === "new") {
+        targetBinRef = await addDoc(collection(db, "users", user.uid, "bins"), {
+          name: batchName || `Kitchen Bin #${Math.floor(Math.random() * 1000)}`,
+          status: "filling",
+          totalKg: 0,
+          greens: 0,
+          browns: 0,
+          cnRatio: 0,
+          timestamp: serverTimestamp(),
+          curingStartedAt: null
+        });
+      } else {
+        targetBinRef = doc(db, "users", user.uid, "bins", selectedBinId);
+      }
+
+      // 2. Log exactly what was thrown today inside the bin
+      await addDoc(collection(db, "users", user.uid, "bins", targetBinRef.id, "logs"), {
         greens: Number(greens),
         browns: Number(browns),
         totalKg: totalWeight,
-        cnRatio: cnRatio,
         timestamp: serverTimestamp(),
-        verified: image && analysisResult ? analysisResult.verified : false,
-        name: batchName || `Batch #${Math.floor(Math.random() * 1000)}`
+        verified: image && analysisResult ? analysisResult.verified : false
       });
 
-      // 2. Update global stats
+      // 3. Update the aggregate totals on the Bin itself
+      const currentBinSnap = await getDoc(targetBinRef);
+      const cbData = currentBinSnap.data();
+      const newBinGreens = (cbData.greens || 0) + Number(greens);
+      const newBinBrowns = (cbData.browns || 0) + Number(browns);
+      
+      await updateDoc(targetBinRef, {
+        totalKg: increment(totalWeight),
+        greens: increment(Number(greens)),
+        browns: increment(Number(browns)),
+        cnRatio: calculateCNRatio(newBinGreens, newBinBrowns) || 0
+      });
+
+      // 4. Update global user stats
+      const userRef = doc(db, "users", user.uid);
       await updateDoc(userRef, {
         totalWasteKg: increment(totalWeight),
         xp: increment(xpEarned),
@@ -124,7 +155,7 @@ const Logger = () => {
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#0a0a0a' }}>
       <Sidebar />
-      <div className="ml-64 p-10 min-h-screen max-w-5xl mx-auto">
+      <div className="ml-64 p-10 min-h-screen max-w-[1400px] mx-auto">
         <div className="mb-12">
           <h1 className="text-3xl font-bold text-white tracking-tight">Log Your Impact 🚀</h1>
           <p className="mt-2 text-xs font-semibold uppercase tracking-widest leading-relaxed" style={{ color: '#6b7280' }}>
@@ -132,7 +163,7 @@ const Logger = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
           {/* Left: AI & Upload */}
           <div className="space-y-8">
             <div className={`relative p-8 rounded-2xl border-2 border-dashed transition-all duration-500 flex flex-col items-center justify-center min-h-[400px] overflow-hidden ${
@@ -205,17 +236,34 @@ const Logger = () => {
             <h2 className="text-xl font-bold text-white tracking-tight mb-8 uppercase text-xs tracking-widest" style={{ color: '#6b7280' }}>Verification & Weights</h2>
             
             <div className="space-y-10 flex-1">
-              {/* Batch Name Input */}
+              {/* Bin Selection Input */}
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-widest mb-3" style={{ color: '#4b5563' }}>Custom Batch Name</p>
-                <input 
-                  type="text"
-                  placeholder="e.g. Kitchen Scraps #1"
-                  value={batchName}
-                  onChange={(e) => setBatchName(e.target.value)}
-                  className="w-full px-6 py-4 rounded-xl font-bold text-white outline-none transition-all"
+                <p className="text-[10px] font-bold uppercase tracking-widest mb-3" style={{ color: '#4b5563' }}>Select Active Bin</p>
+                <select 
+                  value={selectedBinId}
+                  onChange={(e) => {
+                    setSelectedBinId(e.target.value);
+                    if(e.target.value !== "new") setBatchName("");
+                  }}
+                  className="w-full px-6 py-4 rounded-xl font-bold text-white outline-none transition-all mb-4"
                   style={{ backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)' }}
-                />
+                >
+                  <option value="new" style={{color: "black"}}>+ Create New Bin</option>
+                  {activeBins.map(b => (
+                    <option key={b.id} value={b.id} style={{color: "black"}}>{b.name} ({(b.totalKg || 0).toFixed(1)}kg)</option>
+                  ))}
+                </select>
+
+                {selectedBinId === "new" && (
+                  <input 
+                    type="text"
+                    placeholder="New Bin Name (e.g. Balcony Bin 1)"
+                    value={batchName}
+                    onChange={(e) => setBatchName(e.target.value)}
+                    className="w-full px-6 py-4 rounded-xl font-bold text-white outline-none transition-all"
+                    style={{ backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)' }}
+                  />
+                )}
               </div>
 
               {/* Greens */}
@@ -289,6 +337,69 @@ const Logger = () => {
                   <>Confirm & Log Impact <span className="text-xl">🚀</span></>
                 )}
               </button>
+            </div>
+          </div>
+
+          {/* New Right Column: Active Bin Summary & Tips */}
+          <div className="space-y-8">
+            <div className="p-10 rounded-2xl flex flex-col h-full" style={{ backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
+              <h2 className="text-xl font-bold text-white tracking-tight mb-8 uppercase text-xs tracking-widest" style={{ color: '#6b7280' }}>
+                {selectedBinId === 'new' ? 'Pro Tips' : 'Bin Status Breakdown'}
+              </h2>
+
+              {selectedBinId === 'new' ? (
+                <div className="flex-1 space-y-6 animate-in fade-in zoom-in duration-300">
+                  <div className="p-6 rounded-2xl relative overflow-hidden" style={{ backgroundColor: 'rgba(34,197,94,0.05)', border: '1px solid rgba(34,197,94,0.1)' }}>
+                    <h3 className="text-[#22c55e] font-bold text-xs uppercase tracking-widest mb-3">🥦 Greens (Nitrogen)</h3>
+                    <p className="text-xs text-gray-400 font-medium leading-relaxed">Vegetable peelings, fruit scraps, coffee grounds, and tea bags. Fast to break down and provides vital moisture.</p>
+                  </div>
+                  <div className="p-6 rounded-2xl relative overflow-hidden" style={{ backgroundColor: 'rgba(245,158,11,0.05)', border: '1px solid rgba(245,158,11,0.1)' }}>
+                    <h3 className="text-[#f59e0b] font-bold text-xs uppercase tracking-widest mb-3">🍂 Browns (Carbon)</h3>
+                    <p className="text-xs text-gray-400 font-medium leading-relaxed">Dry leaves, twigs, plain cardboard, egg cartons, and newspaper. Adds structure and prevents odors.</p>
+                  </div>
+                  <div className="p-6 rounded-2xl" style={{ backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)' }}>
+                    <h3 className="text-white font-bold text-xs uppercase tracking-widest mb-3">⚖️ The Target Ratio</h3>
+                    <p className="text-xs text-gray-400 font-medium leading-relaxed">Aim for roughly 2 parts browns to 1 part greens by volume. Too wet? Add browns. Too dry? Add greens!</p>
+                  </div>
+                </div>
+              ) : (() => {
+                 const currentBin = activeBins.find(b => b.id === selectedBinId);
+                 if (!currentBin) return null;
+                 return (
+                   <div className="flex-1 flex flex-col animate-in fade-in duration-300">
+                     <div className="text-center mb-10 p-8 rounded-2xl bg-black/40 border border-white/5 shadow-inner">
+                        <span className="text-6xl block mb-4 filter drop-shadow-lg object-scale-down transform transition-transform hover:scale-110">🗑️</span>
+                        <h3 className="text-2xl font-bold text-white mb-2 tracking-tight">{currentBin.name}</h3>
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-[#f59e0b] animate-pulse">Currently Filling</p>
+                     </div>
+
+                     <div className="space-y-6 mb-8 flex-1">
+                        <div className="flex justify-between items-center pb-5 border-b border-white/5">
+                          <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">Base Weight</span>
+                          <span className="text-lg font-black text-white">{currentBin.totalKg.toFixed(1)} <span className="text-xs font-bold text-gray-500">kg</span></span>
+                        </div>
+                        <div className="flex justify-between items-center pb-5 border-b border-white/5">
+                          <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">Total Greens</span>
+                          <span className="text-lg font-black text-[#22c55e]">{currentBin.greens?.toFixed(1) || 0} <span className="text-xs font-bold text-[#22c55e]/50">kg</span></span>
+                        </div>
+                        <div className="flex justify-between items-center pb-5 border-b border-white/5">
+                          <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">Total Browns</span>
+                          <span className="text-lg font-black text-[#f59e0b]">{currentBin.browns?.toFixed(1) || 0} <span className="text-xs font-bold text-[#f59e0b]/50">kg</span></span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">Current C:N Ratio</span>
+                          <span className="text-xl font-black text-white">{currentBin.cnRatio?.toFixed(1) || 0}</span>
+                        </div>
+                     </div>
+
+                     <div className="p-6 rounded-2xl" style={{ backgroundColor: 'rgba(34,197,94,0.05)', border: '1px solid rgba(34,197,94,0.1)' }}>
+                        <p className="text-[11px] text-gray-400 leading-relaxed text-center font-bold">
+                          Adding today's scraps will instantly merge into <span className="text-white">{currentBin.name}</span> and recalculate the ratio balance!
+                        </p>
+                     </div>
+                   </div>
+                 );
+              })()}
             </div>
           </div>
         </div>

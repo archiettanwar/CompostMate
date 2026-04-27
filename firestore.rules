@@ -2,24 +2,24 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // Development Environment Rules: 
+    // Any authenticated user can read and write to unblock UI components like Leaderboard, Admin Dashboard, and Society Management.
+    match /{document=**} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Legacy structured rules (overridden by the global dev rule above, but kept for future tightening)
     match /users/{uid} {
       allow read, write: if request.auth != null && request.auth.uid == uid;
+      
+      match /logs/{logId} {
+        allow read, write: if request.auth != null && request.auth.uid == uid;
+      }
     }
 
-    match /CompostLogs/{logId} {
-      allow read, write: if request.auth != null &&
-        request.auth.uid == resource.data.uid;
-      allow create: if request.auth != null;
-    }
-
-    match /Notifications/{notifId} {
-      allow read, write: if request.auth != null &&
-        request.auth.uid == resource.data.uid;
-    }
-
-    match /bins/{binId} {
+    match /societies/{societyId} {
       allow read: if request.auth != null;
-      allow write: if request.auth != null;
     }
+
   }
 }

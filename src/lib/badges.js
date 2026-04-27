@@ -43,9 +43,53 @@ export const BADGES = [
     criteria: (stats) => stats.xp >= 1000,
     color: 'bg-indigo-50',
     textColor: 'text-indigo-600'
+  },
+  {
+    id: 'half_ton_hero',
+    name: 'Heavy Lifter',
+    icon: '🦸‍♂️',
+    description: 'Logged over 50kg of waste',
+    criteria: (stats) => stats.totalWasteKg >= 50,
+    color: 'bg-red-50',
+    textColor: 'text-red-600'
+  },
+  {
+    id: 'century_club',
+    name: 'Century Club',
+    icon: '💯',
+    description: 'Logged an incredible 100kg',
+    criteria: (stats) => stats.totalWasteKg >= 100,
+    color: 'bg-rose-50',
+    textColor: 'text-rose-600'
+  },
+  {
+    id: 'month_streak',
+    name: 'Habit Builder',
+    icon: '🔄',
+    description: 'Maintain a 30-day streak',
+    criteria: (stats) => stats.streak >= 30,
+    color: 'bg-orange-50',
+    textColor: 'text-orange-600'
+  },
+  {
+    id: 'level_10',
+    name: 'Grandmaster',
+    icon: '🧙‍♂️',
+    description: 'Reach Level 10',
+    criteria: (stats) => stats.level >= 10,
+    color: 'bg-teal-50',
+    textColor: 'text-teal-600'
+  },
+  {
+    id: 'planet_champion',
+    name: 'Planet Champion',
+    icon: '🌍',
+    description: 'Earn 5000 total XP',
+    criteria: (stats) => stats.xp >= 5000,
+    color: 'bg-emerald-50',
+    textColor: 'text-emerald-600'
   }
 ];
-
 export const checkBadges = (userData) => {
   const stats = {
     xp: userData?.xp || 0,

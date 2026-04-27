@@ -166,7 +166,7 @@ const Profile = () => {
     <div className="min-h-screen" style={{ backgroundColor: '#0a0a0a' }}>
       <Sidebar />
       
-      <div className="ml-64 p-10 min-h-screen max-w-6xl mx-auto">
+      <div className="ml-64 p-10 min-h-screen">
         {/* Header Section */}
         <div className="mb-12">
           <div className="flex items-center gap-8 p-8 rounded-xl relative overflow-hidden" style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>

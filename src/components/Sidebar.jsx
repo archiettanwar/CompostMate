@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { auth, db } from "../lib/firebase";
 import { doc, getDoc } from "firebase/firestore";
 import { onAuthStateChanged, signOut } from "firebase/auth";
+import { BADGES, checkBadges } from "../lib/badges";
 
 const Sidebar = () => {
   const [user, setUser] = useState(null);
@@ -11,23 +12,68 @@ const Sidebar = () => {
   const location = useLocation();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+    let unsubscribeUser = null;
+    const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
       if (!firebaseUser) {
         navigate("/auth");
         return;
       }
       setUser(firebaseUser);
-      try {
-        const docSnap = await getDoc(doc(db, "users", firebaseUser.uid));
+      
+      const { onSnapshot } = await import('firebase/firestore');
+      unsubscribeUser = onSnapshot(doc(db, "users", firebaseUser.uid), (docSnap) => {
         if (docSnap.exists()) {
           setUserData(docSnap.data());
         }
-      } catch (error) {
-        console.error("Error fetching user data:", error);
-      }
+      });
     });
-    return () => unsubscribe();
+    return () => {
+      unsubscribeAuth();
+      if (unsubscribeUser) unsubscribeUser();
+    };
   }, [navigate]);
+
+  // Global Badge Unlock Monitor
+  useEffect(() => {
+    if (!userData || !user) return;
+    
+    const earnedBadgeIds = checkBadges(userData);
+    const prevUnlocked = userData.unlockedBadges || [];
+    const newlyUnlocked = earnedBadgeIds.filter(id => !prevUnlocked.includes(id));
+    
+    if (newlyUnlocked.length > 0) {
+      const triggerBadgeAlerts = async () => {
+        try {
+          const { writeBatch, collection, serverTimestamp } = await import('firebase/firestore');
+          const batch = writeBatch(db);
+          
+          const newUnlockedList = [...prevUnlocked, ...newlyUnlocked];
+          // Update the user doc to cache the unlocked ones
+          batch.update(doc(db, "users", user.uid), { unlockedBadges: newUnlockedList });
+          
+          // Send notifications
+          newlyUnlocked.forEach(badgeId => {
+             const badgeInfo = BADGES.find(b => b.id === badgeId);
+             if (badgeInfo) {
+                 batch.set(doc(collection(db, "users", user.uid, "notifications")), {
+                   type: 'badge',
+                   badgeId: badgeId,
+                   title: `New Badge Unlocked! ${badgeInfo.icon}`,
+                   message: `Congratulations! You've earned the "${badgeInfo.name}" badge.`,
+                   timestamp: serverTimestamp(),
+                   read: false
+                 });
+             }
+          });
+          
+          await batch.commit();
+        } catch(e) {
+          console.error("Badge trigger failed:", e);
+        }
+      };
+      triggerBadgeAlerts();
+    }
+  }, [userData, user]);
 
   const navItems = [
     { id: 'home', label: 'Home', icon: '🏠', path: '/dashboard' },

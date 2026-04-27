@@ -26,6 +26,8 @@ const AdminDashboard = () => {
   const [selectedMember, setSelectedMember] = useState(null);
   const [discountPercent, setDiscountPercent] = useState(0);
   const [discountNote, setDiscountNote] = useState("");
+  const [broadcastMessage, setBroadcastMessage] = useState("");
+  const [isBroadcasting, setIsBroadcasting] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -133,6 +135,38 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleBroadcast = async () => {
+    if (!broadcastMessage.trim() || members.length === 0) return;
+    setIsBroadcasting(true);
+    
+    try {
+      // Import sequentially instead of dynamically grouping batch, 
+      // Firestore batch limit is 500 which is plenty for our small society
+      const { writeBatch, collection, serverTimestamp } = await import('firebase/firestore');
+      const batch = writeBatch(db);
+      
+      members.forEach((member) => {
+        const notifRef = doc(collection(db, "users", member.id, "notifications"));
+        batch.set(notifRef, {
+          type: 'admin',
+          title: '📢 Secretary Broadcast',
+          message: broadcastMessage,
+          timestamp: serverTimestamp(),
+          read: false
+        });
+      });
+      
+      await batch.commit();
+      showToast('Broadcast sent successfully to all members! 📢');
+      setBroadcastMessage("");
+    } catch (err) {
+      console.error("Broadcast error:", err);
+      showToast("Failed to send broadcast.", "error");
+    } finally {
+      setIsBroadcasting(false);
+    }
+  };
+
   if (loading && !userData) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#0a0a0a' }}>
@@ -158,6 +192,31 @@ const AdminDashboard = () => {
                 <p className="text-3xl font-bold text-white tracking-tight">{stat.value}</p>
               </div>
             ))}
+            
+            {/* Broadcast Widget */}
+            <div className="md:col-span-2 lg:col-span-4 mt-8 rounded-2xl p-8" style={{ backgroundColor: 'rgba(245,158,11,0.05)', border: '1px solid rgba(245,158,11,0.1)' }}>
+               <h3 className="text-xl font-bold text-white tracking-tight mb-2">📢 Society Broadcast</h3>
+               <p className="text-[10px] font-bold uppercase tracking-widest mb-6" style={{ color: '#f59e0b' }}>Send a real-time push alert to every member's inbox</p>
+               <div className="flex flex-col md:flex-row gap-4">
+                 <input 
+                   type="text" 
+                   value={broadcastMessage}
+                   onChange={(e) => setBroadcastMessage(e.target.value)}
+                   disabled={isBroadcasting}
+                   placeholder="e.g. Please secure your bins, heavy rain expected tomorrow..."
+                   className="flex-1 rounded-xl px-6 py-4 font-bold text-white outline-none transition-all"
+                   style={{ backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}
+                 />
+                 <button 
+                   onClick={handleBroadcast}
+                   disabled={isBroadcasting || !broadcastMessage.trim()}
+                   className="px-8 py-4 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all cursor-pointer disabled:opacity-50"
+                   style={{ background: 'linear-gradient(to right, #f59e0b, #d97706)', color: 'white', boxShadow: '0 8px 32px rgba(245,158,11,0.3)' }}
+                 >
+                   {isBroadcasting ? 'Broadcasting...' : 'Blast Alert 🚀'}
+                 </button>
+               </div>
+            </div>
           </div>
         );
       case 'Members':

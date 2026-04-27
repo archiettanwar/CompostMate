@@ -6,6 +6,7 @@ import { onAuthStateChanged } from "firebase/auth";
 import { sendChatMessage } from "../lib/gemini.js";
 import Sidebar from "../components/Sidebar";
 import { articles } from "../data/articles";
+import { useNotifications } from "../hooks/useNotifications";
 
 export default function Dashboard() {
   const [user, setUser] = useState(null);
@@ -13,6 +14,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [readArticles, setReadArticles] = useState([]);
   const navigate = useNavigate();
+  const { unreadCount } = useNotifications();
 
   useEffect(() => {
     const saved = JSON.parse(localStorage.getItem('readArticles') || '[]');
@@ -131,11 +133,18 @@ export default function Dashboard() {
             </h1>
             <p className="mt-2 uppercase text-xs tracking-widest font-semibold" style={{ color: '#6b7280' }}>{getDateString()}</p>
           </div>
-          <div className="hidden lg:flex items-center gap-3 p-2 rounded-xl" style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
-             <div className="px-4 py-2 rounded-lg" style={{ backgroundColor: 'rgba(34,197,94,0.12)' }}>
-                <span className="font-bold text-xs uppercase tracking-widest" style={{ color: '#22c55e' }}>Active System</span>
-             </div>
-          </div>
+          <button 
+            onClick={() => navigate('/notifications')}
+            className="hidden lg:flex items-center justify-center w-14 h-14 rounded-xl relative transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer" 
+            style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
+          >
+             <span className="text-2xl filter drop-shadow-md">🔔</span>
+             {unreadCount > 0 && (
+               <div className="absolute -top-2 -right-2 w-6 h-6 rounded-full flex items-center justify-center font-black text-[10px] text-white animate-pulse" style={{ backgroundColor: '#ef4444', border: '2px solid #0a0a0a' }}>
+                 {unreadCount > 9 ? '9+' : unreadCount}
+               </div>
+             )}
+          </button>
         </div>
 
         {/* Join Society Banner */}
