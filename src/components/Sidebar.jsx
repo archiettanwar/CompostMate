@@ -23,7 +23,14 @@ const Sidebar = () => {
       const { onSnapshot } = await import('firebase/firestore');
       unsubscribeUser = onSnapshot(doc(db, "users", firebaseUser.uid), (docSnap) => {
         if (docSnap.exists()) {
-          setUserData(docSnap.data());
+          const data = docSnap.data();
+          if (data.role === 'banned') {
+             signOut(auth);
+             alert("System Alert: Your account has been suspended by the Global Administrator.");
+             window.location.href = "/";
+             return;
+          }
+          setUserData(data);
         }
       });
     });
@@ -76,17 +83,18 @@ const Sidebar = () => {
   }, [userData, user]);
 
   const navItems = [
-    { id: 'home', label: 'Home', icon: '🏠', path: '/dashboard' },
+    { id: 'home', label: 'My Dashboard', icon: '🏠', path: '/dashboard' },
     { id: 'tracker', label: 'Tracker', icon: '⏳', path: '/tracker' },
-    { id: 'log', label: 'Log Waste', icon: '📝', path: '/log' },
+    { id: 'log', label: 'Record Waste', icon: '📝', path: '/log' },
     { id: 'leaderboard', label: 'Leaderboard', icon: '🏆', path: '/leaderboard' },
     { id: 'badges', label: 'Badges', icon: '⭐', path: '/badges' },
     { id: 'learn', label: 'Learn', icon: '📚', path: '/learn' },
     { id: 'analytics', label: 'Analytics', icon: '📊', path: '/analytics' },
     { id: 'tools', label: 'Tools', icon: '🛠️', path: '/tools' },
     ...(userData?.role === 'resident' ? [{ id: 'perks', label: 'My Perks', icon: '🎁', path: '/perks' }] : []),
-    ...(userData?.role === 'society_admin' || userData?.role === 'super_admin' ? [{ id: 'admin', label: 'Admin Panel', icon: '🔐', path: '/admin' }] : []),
-    ...(userData?.societyId ? [{ id: 'my-society', label: 'My Building', icon: '🏢', path: '/my-society' }] : [{ id: 'join', label: 'Join Society', icon: '🏢', path: '/join-society' }]),
+    ...(userData?.role === 'society_admin' || userData?.role === 'super_admin' ? [{ id: 'admin', label: 'Manage Building', icon: '🔐', path: '/admin' }] : []),
+    ...(userData?.role === 'super_admin' ? [{ id: 'superadmin', label: 'System Command', icon: '🌍', path: '/superadmin' }] : []),
+    ...(userData?.societyId ? [{ id: 'my-society', label: 'Society Hub', icon: '🏢', path: '/my-society' }] : [{ id: 'join', label: 'Join Society', icon: '🏢', path: '/join-society' }]),
   ];
 
   return (

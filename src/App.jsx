@@ -15,6 +15,7 @@ import Tracker from "./screens/Tracker";
 import JoinSociety from "./screens/JoinSociety";
 import CreateSociety from "./screens/CreateSociety";
 import AdminDashboard from "./screens/AdminDashboard";
+import SuperAdmin from "./screens/SuperAdmin";
 import MyPerks from "./screens/MyPerks";
 import Notifications from "./screens/Notifications";
 import './App.css'
@@ -41,6 +42,7 @@ function App() {
         <Route path="/join-society" element={<JoinSociety />} />
         <Route path="/create-society" element={<CreateSociety />} />
         <Route path="/admin" element={<AdminDashboard />} />
+        <Route path="/superadmin" element={<SuperAdmin />} />
         <Route path="/perks" element={<MyPerks />} />
         <Route path="/my-society" element={<MySociety />} />
         <Route path="/notifications" element={<Notifications />} />
