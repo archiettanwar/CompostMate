@@ -12,7 +12,7 @@ import {
   addDoc, 
   serverTimestamp 
 } from "firebase/firestore";
-import Sidebar from "../components/Sidebar";
+import TopNav from "../components/TopNav";
 import { useNotification } from "../context/NotificationContext";
 
 const AdminDashboard = () => {
@@ -420,9 +420,9 @@ const AdminDashboard = () => {
 
   return (
     <div className="min-h-screen flex" style={{ backgroundColor: '#0a0a0a' }}>
-      <Sidebar />
+      <TopNav />
       
-      <div className="flex-1 ml-64 p-10 max-w-7xl mx-auto">
+      <div className="flex-1 pt-24 md:pt-28 p-10 max-w-7xl mx-auto">
         {/* Top Bar */}
         <div className="flex justify-between items-end mb-10 pb-8" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
           <div>

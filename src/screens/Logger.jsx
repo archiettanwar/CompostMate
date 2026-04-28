@@ -4,10 +4,12 @@ import { auth, db } from "../lib/firebase";
 import { doc, getDoc, updateDoc, increment, collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import { analyzeCompostImage } from "../lib/gemini";
-import Sidebar from "../components/Sidebar";
+import TopNav from "../components/TopNav";
 import { calculateCNRatio, calculateMaturity, getCNFeedback } from "../lib/algorithms.js";
 import { useNotification } from "../context/NotificationContext";
 import { useBin } from "../hooks/useBin";
+import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
+import { Capacitor } from '@capacitor/core';
 
 const Tooltip = ({ text }) => {
   const [visible, setVisible] = useState(false);
@@ -65,23 +67,52 @@ const Logger = () => {
 
     const reader = new FileReader();
     reader.onloadend = async () => {
-      const base64 = reader.result;
-      setImage(base64);
-      setAnalyzing(true);
-      try {
-        const result = await analyzeCompostImage(base64);
-        setAnalysisResult(result);
-        if (result.verified) {
-          if (result.category === 'Green') setGreens(result.weightEstimate);
-          else setBrowns(result.weightEstimate);
-        }
-      } catch (err) {
-        console.error("Analysis failed:", err);
-      } finally {
-        setAnalyzing(false);
-      }
+      processImage(reader.result);
     };
     reader.readAsDataURL(file);
+  };
+
+  const takePhoto = async () => {
+    if (!Capacitor.isNativePlatform()) {
+      // Fallback for web if someone clicks it, though the input handle handles it
+      document.getElementById('file-input').click();
+      return;
+    }
+
+    try {
+      const image = await Camera.getPhoto({
+        quality: 90,
+        allowEditing: false,
+        resultType: CameraResultType.Base64,
+        source: CameraSource.Prompt // This gives the "Take Photo" or "Choose from Photos" option!
+      });
+
+      if (image.base64String) {
+        processImage(`data:image/${image.format};base64,${image.base64String}`);
+      }
+    } catch (error) {
+      console.error('Camera error:', error);
+      if (error.message !== 'User cancelled photos app') {
+        showToast("Could not access camera/photos", "error");
+      }
+    }
+  };
+
+  const processImage = async (base64) => {
+    setImage(base64);
+    setAnalyzing(true);
+    try {
+      const result = await analyzeCompostImage(base64);
+      setAnalysisResult(result);
+      if (result.verified) {
+        if (result.category === 'Green') setGreens(result.weightEstimate);
+        else setBrowns(result.weightEstimate);
+      }
+    } catch (err) {
+      console.error("Analysis failed:", err);
+    } finally {
+      setAnalyzing(false);
+    }
   };
 
   const handleLogWaste = async () => {
@@ -154,8 +185,8 @@ const Logger = () => {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#0a0a0a' }}>
-      <Sidebar />
-      <div className="ml-64 p-10 min-h-screen max-w-[1400px] mx-auto">
+      <TopNav />
+      <div className="pt-28 px-6 lg:px-8 pb-10 min-h-screen max-w-7xl mx-auto w-full">
         <div className="mb-12">
           <h1 className="text-3xl font-bold text-white tracking-tight">Log Your Impact 🚀</h1>
           <p className="mt-2 text-xs font-semibold uppercase tracking-widest leading-relaxed" style={{ color: '#6b7280' }}>
@@ -208,12 +239,15 @@ const Logger = () => {
                   </div>
                 </>
               ) : (
-                <label className="cursor-pointer flex flex-col items-center group">
+                <div 
+                  onClick={takePhoto}
+                  className="cursor-pointer flex flex-col items-center group"
+                >
                   <div className="w-20 h-20 rounded-full bg-white/5 border border-white/10 shadow-xl flex items-center justify-center text-3xl mb-4 group-hover:scale-110 transition-transform group-hover:bg-[#22c55e]/10 group-hover:border-[#22c55e]/30">📸</div>
                   <span className="text-white font-bold text-lg tracking-tight">Snap Bio-Waste</span>
-                  <span className="font-semibold text-[10px] uppercase tracking-widest mt-1" style={{ color: '#6b7280' }}>Upload proof for 2x XP</span>
-                  <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
-                </label>
+                  <span className="font-semibold text-[10px] uppercase tracking-widest mt-1" style={{ color: '#6b7280' }}>Camera or Gallery</span>
+                  <input type="file" id="file-input" accept="image/*" className="hidden" onChange={handleImageUpload} />
+                </div>
               )}
             </div>
 

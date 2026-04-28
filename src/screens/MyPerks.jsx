@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { auth, db } from "../lib/firebase";
 import { doc, getDoc } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
-import Sidebar from "../components/Sidebar";
+import TopNav from "../components/TopNav";
 
 const MyPerks = () => {
     const [userData, setUserData] = useState(null);
@@ -42,9 +42,9 @@ const MyPerks = () => {
 
     return (
         <div className="min-h-screen" style={{ backgroundColor: '#0a0a0a' }}>
-            <Sidebar />
+            <TopNav />
             
-            <div className="ml-64 p-10 min-h-screen max-w-7xl mx-auto">
+            <div className="pt-28 px-6 lg:px-8 pb-10 min-h-screen max-w-7xl mx-auto w-full">
                 {/* Top Bar */}
                 <div className="flex justify-between items-end mb-10 pb-8" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
                     <div>

@@ -9,11 +9,12 @@ import {
   orderBy, 
   limit, 
   doc, 
-  getDoc 
+  getDoc,
+  updateDoc
 } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
-import Sidebar from "../components/Sidebar";
-import { MapContainer, TileLayer, CircleMarker, Popup } from "react-leaflet";
+import TopNav from "../components/TopNav";
+import { MapContainer, TileLayer, CircleMarker, Popup, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 
@@ -24,6 +25,18 @@ L.Icon.Default.mergeOptions({
   iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
   shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
 });
+
+const MapAutoFit = ({ societies }) => {
+  const map = useMap();
+  useEffect(() => {
+    const validSocieties = societies.filter(s => s.lat && s.lng);
+    if (validSocieties.length > 0) {
+      const bounds = L.latLngBounds(validSocieties.map(s => [s.lat, s.lng]));
+      map.fitBounds(bounds, { padding: [50, 50], maxZoom: 14 });
+    }
+  }, [map, societies]);
+  return null;
+};
 
 const Leaderboard = () => {
   const [activeTab, setActiveTab] = useState('Global');
@@ -74,6 +87,7 @@ const Leaderboard = () => {
           
           for (const sDoc of societiesSnap.docs) {
             const sData = sDoc.data();
+
             const mQuery = query(collection(db, "users"), where("societyId", "==", sDoc.id));
             const mSnap = await getDocs(mQuery);
             const totalWaste = mSnap.docs.reduce((acc, d) => acc + (d.data().totalWasteKg || 0), 0);
@@ -118,8 +132,8 @@ const Leaderboard = () => {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#0a0a0a' }}>
-      <Sidebar />
-      <div className="ml-64 p-10 min-h-screen">
+      <TopNav />
+      <div className="pt-28 px-6 lg:px-8 pb-10 min-h-screen max-w-7xl mx-auto w-full">
         
         {/* Header Section */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 gap-6 pb-8" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
@@ -179,6 +193,8 @@ const Leaderboard = () => {
                   url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
                 />
                 
+                <MapAutoFit societies={societies} />
+
                 {societies.filter(s => s.lat && s.lng).map(society => {
                   const getMarkerColor = (totalWaste) => {
                     if (totalWaste >= 100) return "#22c55e";

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { auth, db } from "../lib/firebase";
 import { collection, getDocs, doc, getDoc, updateDoc, deleteDoc } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
-import Sidebar from "../components/Sidebar";
+import TopNav from "../components/TopNav";
 
 const SuperAdmin = () => {
   const [loading, setLoading] = useState(true);
@@ -243,7 +243,7 @@ const SuperAdmin = () => {
 
   return (
     <div className="min-h-screen flex relative" style={{ backgroundColor: '#0a0a0a' }}>
-      <Sidebar />
+      <TopNav />
 
       {/* CSV EXPORT MODAL OVERLAY */}
       {isModalOpen && (
@@ -332,7 +332,7 @@ const SuperAdmin = () => {
       )}
 
 
-      <div className="flex-1 ml-64 p-10">
+      <div className="flex-1 pt-24 md:pt-28 p-10">
         
         {/* Header */}
         <div className="rounded-3xl p-10 mb-10 text-white relative overflow-hidden flex flex-col md:flex-row justify-between items-start md:items-end gap-6" style={{ background: 'linear-gradient(135deg, rgba(20,184,166,0.15) 0%, rgba(13,148,136,0.08) 100%)', border: '1px solid rgba(20,184,166,0.2)' }}>

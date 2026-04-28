@@ -4,7 +4,7 @@ import { auth, db } from "../lib/firebase";
 import { doc, getDoc } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import { sendChatMessage } from "../lib/gemini.js";
-import Sidebar from "../components/Sidebar";
+import TopNav from "../components/TopNav";
 import { articles } from "../data/articles";
 import { useNotifications } from "../hooks/useNotifications";
 
@@ -20,6 +20,26 @@ export default function Dashboard() {
     const saved = JSON.parse(localStorage.getItem('readArticles') || '[]');
     setReadArticles(saved);
   }, []);
+
+  const getGreetingIST = () => {
+    const options = { timeZone: 'Asia/Kolkata', hour: 'numeric', hour12: false };
+    const formatter = new Intl.DateTimeFormat([], options);
+    const hour = parseInt(formatter.format(new Date()), 10);
+    if (hour < 12) return 'Good morning';
+    if (hour < 17) return 'Good afternoon';
+    return 'Good evening';
+  };
+
+  const ECO_TIPS = [
+    "Maintain a 30:1 carbon-to-nitrogen ratio for the most efficient decomposition process.",
+    "Turn your compost every 3-4 days to introduce oxygen and speed up the breakdown.",
+    "Avoid adding meat, dairy, or oily foods to prevent pests and bad odors.",
+    "Crush eggshells before adding them; it helps them break down much faster.",
+    "Keep your compost as damp as a wrung-out sponge for optimal microbial activity.",
+    "Layering browns and greens prevents matting and promotes airflow."
+  ];
+  const [currentTipIndex, setCurrentTipIndex] = useState(0);
+  const nextTip = () => setCurrentTipIndex((prev) => (prev + 1) % ECO_TIPS.length);
 
   // Chat Widget State
   const [isChatOpen, setIsChatOpen] = useState(false);
@@ -121,30 +141,36 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#0a0a0a' }}>
-      <Sidebar />
+      <TopNav />
 
       {/* Main Content */}
-      <div className="ml-64 p-10 min-h-screen">
+      <div className="pt-28 px-6 lg:px-8 pb-10 min-h-screen max-w-7xl mx-auto w-full">
         {/* Top Bar */}
-        <div className="flex justify-between items-end mb-10 pb-8" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end mb-10 pb-8 gap-6" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
           <div>
             <h1 className="text-4xl font-bold text-white tracking-tight">
-              Good morning, {user?.displayName?.split(' ')[0] || userData?.name?.split(' ')[0] || "Composter"} 👋
+              {getGreetingIST()}, {user?.displayName?.split(' ')[0] || userData?.name?.split(' ')[0] || "Composter"} 👋
             </h1>
             <p className="mt-2 uppercase text-xs tracking-widest font-semibold" style={{ color: '#6b7280' }}>{getDateString()}</p>
           </div>
-          <button 
-            onClick={() => navigate('/notifications')}
-            className="hidden lg:flex items-center justify-center w-14 h-14 rounded-xl relative transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer" 
-            style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
-          >
-             <span className="text-2xl filter drop-shadow-md">🔔</span>
-             {unreadCount > 0 && (
-               <div className="absolute -top-2 -right-2 w-6 h-6 rounded-full flex items-center justify-center font-black text-[10px] text-white animate-pulse" style={{ backgroundColor: '#ef4444', border: '2px solid #0a0a0a' }}>
-                 {unreadCount > 9 ? '9+' : unreadCount}
+          
+          {/* Top Eco Tip */}
+          <div className="rounded-xl p-4 lg:max-w-md w-full relative group cursor-pointer" style={{ background: 'linear-gradient(135deg, rgba(34,197,94,0.15) 0%, rgba(22,163,74,0.08) 100%)', border: '1px solid rgba(34,197,94,0.2)' }} onClick={nextTip}>
+             <div className="flex justify-between items-start mb-2">
+               <div className="flex items-center gap-2">
+                  <span className="text-lg">💡</span>
+                  <h3 className="font-bold text-[10px] uppercase tracking-widest text-[#22c55e]">Eco Tip</h3>
                </div>
-             )}
-          </button>
+               <button className="text-[#22c55e] hover:text-white transition-colors p-1" onClick={(e) => { e.stopPropagation(); nextTip(); }}>
+                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4 transition-transform group-hover:translate-x-1">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+                 </svg>
+               </button>
+             </div>
+             <p className="font-medium text-xs leading-relaxed italic" style={{ color: '#9ca3af' }}>
+               "{ECO_TIPS[currentTipIndex]}"
+             </p>
+          </div>
         </div>
 
         {/* Join Society Banner */}
@@ -321,56 +347,6 @@ export default function Dashboard() {
                </div>
             </div>
 
-            {/* TOOLS & ACCESSORIES WIDGET */}
-            <div className="rounded-xl p-6 mb-8" style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h3 className="text-lg font-bold text-white tracking-tight">🛠️ Tools</h3>
-                  <p className="text-[10px] font-semibold uppercase tracking-widest mt-1" style={{ color: '#6b7280' }}>Curated Selection</p>
-                </div>
-                <button 
-                  onClick={() => navigate("/tools")}
-                  className="font-bold text-xs uppercase tracking-widest hover:translate-x-1 transition-all cursor-pointer"
-                  style={{ color: '#22c55e' }}
-                >
-                  All →
-                </button>
-              </div>
-              <div className="space-y-3 mb-6">
-                {[
-                  { name: "20L Bin", price: "₹800+", image: "/assets/tools/bin_20l.jpg" },
-                  { name: "Aerator", price: "₹400+", image: "/assets/tools/aerator.jpg" }
-                ].map((item, i) => (
-                  <div key={i} className="flex gap-4 p-3 rounded-xl transition-all group cursor-pointer" style={{ border: '1px solid transparent' }} onClick={() => navigate("/tools")}
-                    onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; }}
-                    onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.borderColor = 'transparent'; }}
-                  >
-                    <img src={item.image} alt={item.name} className="w-12 h-12 rounded-lg object-cover" />
-                    <div className="flex-1">
-                      <h4 className="font-semibold text-xs text-white">{item.name}</h4>
-                      <p className="font-bold text-[10px]" style={{ color: '#22c55e' }}>{item.price}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <button 
-                onClick={() => navigate("/tools")}
-                className="w-full py-4 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all cursor-pointer text-white"
-                style={{ background: 'linear-gradient(to bottom, #22c55e, #16a34a)', boxShadow: '0 4px 24px rgba(34,197,94,0.2)' }}
-              >
-                Browse All Tools
-              </button>
-            </div>
-
-             <div className="rounded-xl p-6" style={{ background: 'linear-gradient(135deg, rgba(34,197,94,0.15) 0%, rgba(22,163,74,0.08) 100%)', border: '1px solid rgba(34,197,94,0.2)' }}>
-                <div className="flex items-center gap-2 mb-4">
-                   <span className="text-xl">💡</span>
-                   <h3 className="font-bold text-xs uppercase tracking-widest text-white">Eco Tip</h3>
-                </div>
-                <p className="font-medium text-sm leading-relaxed italic" style={{ color: '#9ca3af' }}>
-                  "Maintain a 30:1 carbon-to-nitrogen ratio for the most efficient decomposition process."
-                </p>
-             </div>
           </div>
         </div>
       </div>

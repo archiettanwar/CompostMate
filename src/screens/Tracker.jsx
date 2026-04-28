@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import Sidebar from "../components/Sidebar";
+import TopNav from "../components/TopNav";
 import { useBin } from "../hooks/useBin";
 import MaturityCircle from "../components/MaturityCircle";
 import { auth, db } from "../lib/firebase";
@@ -111,8 +111,8 @@ const Tracker = () => {
 
   return (
     <div className="min-h-screen pb-20" style={{ backgroundColor: '#0a0a0a' }}>
-      <Sidebar />
-      <div className="ml-64 p-10 min-h-screen max-w-[1400px] mx-auto">
+      <TopNav />
+      <div className="pt-28 px-6 lg:px-8 pb-10 min-h-screen max-w-7xl mx-auto w-full">
         <div className="mb-12">
           <h1 className="text-3xl font-bold text-white tracking-tight uppercase">Maturity Tracker</h1>
           <p className="mt-2 text-xs font-semibold uppercase tracking-widest" style={{ color: '#6b7280' }}>Manage your bins and lifecycle</p>

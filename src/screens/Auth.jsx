@@ -4,7 +4,10 @@ import {
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword, 
   GoogleAuthProvider, 
-  signInWithPopup 
+  signInWithRedirect,
+  getRedirectResult,
+  indexedDBLocalPersistence,
+  setPersistence
 } from "firebase/auth";
 import { doc, setDoc, getDoc } from "firebase/firestore";
 import { auth, db, getUserRole } from "../lib/firebase.js";
@@ -18,6 +21,53 @@ const Auth = () => {
   const [error, setError] = useState("");
   const [focusedField, setFocusedField] = useState(null);
   const navigate = useNavigate();
+
+  // Handle Google Redirect Result
+  React.useEffect(() => {
+    const handleRedirectResult = async () => {
+      try {
+        const result = await getRedirectResult(auth);
+        if (result) {
+          const user = result.user;
+          await handlePostAuth(user);
+        }
+      } catch (err) {
+        console.error("Redirect Result Error:", err);
+        setError(err.message.replace("Firebase: ", ""));
+      }
+    };
+    handleRedirectResult();
+  }, []);
+
+  const handlePostAuth = async (user) => {
+    const userRef = doc(db, "users", user.uid);
+    const userSnap = await getDoc(userRef);
+
+    if (!userSnap.exists()) {
+      await setDoc(userRef, {
+        uid: user.uid,
+        email: user.email,
+        name: user.displayName || user.email.split("@")[0],
+        profilePic: user.photoURL || "",
+        xp: 0,
+        level: 1,
+        streak: 0,
+        badges: [],
+        role: "resident",
+        societyId: null,
+        flatNumber: "",
+        discount: 0,
+        discountNote: "",
+        onboarded: false,
+        createdAt: new Date().toISOString()
+      });
+    }
+
+    const role = await getUserRole(user.uid);
+    if (role === "society_admin") navigate("/admin");
+    else if (role === "super_admin") navigate("/superadmin");
+    else navigate("/dashboard");
+  };
 
   const handleEmailAuth = async (e) => {
     e.preventDefault();
@@ -71,41 +121,14 @@ const Auth = () => {
     const provider = new GoogleAuthProvider();
 
     try {
-      const result = await signInWithPopup(auth, provider);
-      const user = result.user;
-
-      const userRef = doc(db, "users", user.uid);
-      const userSnap = await getDoc(userRef);
-
-      if (!userSnap.exists()) {
-        await setDoc(userRef, {
-          uid: user.uid,
-          email: user.email,
-          name: user.displayName || user.email.split("@")[0],
-          profilePic: user.photoURL || "",
-          xp: 0,
-          level: 1,
-          streak: 0,
-          badges: [],
-          role: "resident",
-          societyId: null,
-          flatNumber: "",
-          discount: 0,
-          discountNote: "",
-          onboarded: false,
-          createdAt: new Date().toISOString()
-        });
-      }
-
-      const role = await getUserRole(user.uid);
-      if (role === "society_admin") navigate("/admin");
-      else if (role === "super_admin") navigate("/superadmin");
-      else navigate("/dashboard");
-
+      // Use indexedDB for better survival on mobile reloads
+      await setPersistence(auth, indexedDBLocalPersistence);
+      
+      // Use redirect for mobile compatibility
+      await signInWithRedirect(auth, provider);
     } catch (err) {
       console.error("Google Auth Error:", err);
       setError(err.message.replace("Firebase: ", ""));
-    } finally {
       setLoading(false);
     }
   };

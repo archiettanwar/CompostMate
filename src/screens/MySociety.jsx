@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { auth, db } from "../lib/firebase";
 import { doc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
-import Sidebar from "../components/Sidebar";
+import TopNav from "../components/TopNav";
 
 const MySociety = () => {
   const [user, setUser] = useState(null);
@@ -92,8 +92,8 @@ const MySociety = () => {
 
   return (
     <div className="min-h-screen flex" style={{ backgroundColor: '#0a0a0a' }}>
-      <Sidebar />
-      <div className="flex-1 ml-64 p-10">
+      <TopNav />
+      <div className="flex-1 pt-24 md:pt-28 p-10">
         {/* HEADER */}
         <div className="rounded-3xl p-12 mb-10 text-white relative overflow-hidden" style={{ background: 'linear-gradient(135deg, rgba(34,197,94,0.15) 0%, rgba(22,163,74,0.08) 100%)', border: '1px solid rgba(34,197,94,0.2)' }}>
           <div className="relative z-10">

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { auth, db } from "../lib/firebase";
 import { collection, query, where, getDocs, orderBy, doc, getDoc } from "firebase/firestore";
-import Sidebar from "../components/Sidebar";
+import TopNav from "../components/TopNav";
 
 const Analytics = () => {
   const [user, setUser] = useState(null);
@@ -117,8 +117,8 @@ const Analytics = () => {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#0a0a0a' }}>
-      <Sidebar />
-      <div className="ml-64 p-10 min-h-screen">
+      <TopNav />
+      <div className="pt-28 px-6 lg:px-8 pb-10 min-h-screen max-w-7xl mx-auto w-full">
         {/* Top Bar */}
         <div className="flex justify-between items-end mb-10 pb-8" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
             <div>

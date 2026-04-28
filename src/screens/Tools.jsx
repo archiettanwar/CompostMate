@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Sidebar from '../components/Sidebar';
+import TopNav from "../components/TopNav";
 import { auth } from '../lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { useNotification } from '../context/NotificationContext';
@@ -134,8 +134,8 @@ const Tools = () => {
 
   return (
     <div className="min-h-screen flex" style={{ backgroundColor: '#0a0a0a' }}>
-      <Sidebar />
-      <div className="flex-1 ml-64 p-8">
+      <TopNav />
+      <div className="flex-1 pt-24 md:pt-28 p-8">
         {!selectedProduct ? (
           <>
             {/* HERO SECTION */}

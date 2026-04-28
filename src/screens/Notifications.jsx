@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import Sidebar from "../components/Sidebar";
+import TopNav from "../components/TopNav";
 import { useNotifications } from "../hooks/useNotifications";
 
 const Notifications = () => {
@@ -35,8 +35,8 @@ const Notifications = () => {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#0a0a0a' }}>
-      <Sidebar />
-      <div className="ml-64 p-10 max-w-[1400px] mx-auto">
+      <TopNav />
+      <div className="pt-28 px-6 lg:px-8 pb-10 min-h-screen max-w-7xl mx-auto w-full">
         
         {/* Header */}
         <div className="flex justify-between items-end mb-10 pb-8" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>

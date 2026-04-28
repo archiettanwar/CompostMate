@@ -4,7 +4,7 @@ import { auth, db } from "../lib/firebase";
 import { doc, getDoc } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import { sendChatMessage } from "../lib/gemini.js";
-import Sidebar from "../components/Sidebar";
+import TopNav from "../components/TopNav";
 
 const Chat = () => {
   const [messages, setMessages] = useState([
@@ -88,10 +88,10 @@ const Chat = () => {
 
   return (
     <div className="flex min-h-screen" style={{ backgroundColor: '#0a0a0a' }}>
-      <Sidebar />
+      <TopNav />
 
       {/* Main Chat Content Area */}
-      <div className="ml-64 flex-1 flex flex-col h-screen relative">
+      <div className="pt-28 px-6 lg:px-8 pb-10 min-h-screen max-w-7xl mx-auto w-full">
         {/* Top Bar */}
         <header className="px-8 py-6 h-28 flex flex-col justify-center shrink-0 z-10" style={{ backgroundColor: 'rgba(255,255,255,0.02)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
           <h1 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2">

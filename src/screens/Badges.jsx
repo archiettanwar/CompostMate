@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { auth, db } from "../lib/firebase";
 import { doc, getDoc } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
-import Sidebar from "../components/Sidebar";
+import TopNav from "../components/TopNav";
 import BadgeCard from "../components/BadgeCard";
 import { BADGES, checkBadges } from "../lib/badges";
 
@@ -46,8 +46,8 @@ const Badges = () => {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#0a0a0a' }}>
-      <Sidebar />
-      <div className="ml-64 p-10 min-h-screen">
+      <TopNav />
+      <div className="pt-28 px-6 lg:px-8 pb-10 min-h-screen max-w-7xl mx-auto w-full">
         <div className="mb-12">
           <h1 className="text-3xl font-bold text-white tracking-tight uppercase">Badge System</h1>
           <p className="mt-2 text-xs font-semibold uppercase tracking-widest" style={{ color: '#6b7280' }}>Track your composting milestones and achievements</p>

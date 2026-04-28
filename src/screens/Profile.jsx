@@ -4,7 +4,7 @@ import { auth, db, storage } from "../lib/firebase";
 import { doc, getDoc, updateDoc, deleteDoc, collection, getDocs, query, where } from "firebase/firestore";
 import { onAuthStateChanged, signOut, updateProfile } from "firebase/auth";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import Sidebar from "../components/Sidebar";
+import TopNav from "../components/TopNav";
 import { useNotification } from "../context/NotificationContext";
 import XPBar from "../components/XPBar";
 import { BADGES, checkBadges } from "../lib/badges";
@@ -164,9 +164,9 @@ const Profile = () => {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#0a0a0a' }}>
-      <Sidebar />
+      <TopNav />
       
-      <div className="ml-64 p-10 min-h-screen">
+      <div className="pt-28 px-6 lg:px-8 pb-10 min-h-screen max-w-7xl mx-auto w-full">
         {/* Header Section */}
         <div className="mb-12">
           <div className="flex items-center gap-8 p-8 rounded-xl relative overflow-hidden" style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
