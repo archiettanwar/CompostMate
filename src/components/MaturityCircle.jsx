@@ -13,7 +13,7 @@ const MaturityCircle = ({ progress, size = 120, strokeWidth = 10 }) => {
           cx={size / 2}
           cy={size / 2}
           r={radius}
-          stroke="rgba(255,255,255,0.05)"
+          stroke="var(--color-border)"
           strokeWidth={strokeWidth}
           fill="transparent"
         />
@@ -22,7 +22,7 @@ const MaturityCircle = ({ progress, size = 120, strokeWidth = 10 }) => {
           cx={size / 2}
           cy={size / 2}
           r={radius}
-          stroke={progress >= 100 ? "#22c55e" : "#16a34a"}
+          stroke={progress >= 100 ? "var(--color-success)" : "var(--color-primary)"}
           strokeWidth={strokeWidth}
           fill="transparent"
           strokeDasharray={circumference}
@@ -33,8 +33,8 @@ const MaturityCircle = ({ progress, size = 120, strokeWidth = 10 }) => {
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-xl font-bold text-white leading-none">{progress}%</span>
-        <span className="text-[8px] font-bold uppercase tracking-widest mt-1" style={{ color: '#4b5563' }}>Mature</span>
+        <span className="text-xl font-bold leading-none" style={{ color: 'var(--color-text-primary)' }}>{progress}%</span>
+        <span className="text-[8px] font-bold uppercase tracking-widest mt-1" style={{ color: 'var(--color-text-muted)' }}>Mature</span>
       </div>
     </div>
   );

@@ -14,6 +14,7 @@ import {
 } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
 import TopNav from "../components/TopNav";
+import { useTheme } from "../context/ThemeContext";
 import { MapContainer, TileLayer, CircleMarker, Popup, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
@@ -46,6 +47,7 @@ const Leaderboard = () => {
   const [societies, setSocieties] = useState([]);
   const [userRank, setUserRank] = useState(0);
   const [loading, setLoading] = useState(true);
+  const { theme } = useTheme();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -122,7 +124,7 @@ const Leaderboard = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#0a0a0a' }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--color-bg)' }}>
         <div className="font-bold animate-pulse text-xl uppercase tracking-widest text-[#22c55e]">Calculating Rankings...</div>
       </div>
     );
@@ -143,19 +145,19 @@ const Leaderboard = () => {
           </div>
           
           {/* Tab Switcher */}
-          <div className="flex p-1 rounded-xl self-stretch md:self-auto overflow-x-auto" style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+          <div className="flex p-1 rounded-xl self-stretch md:self-auto overflow-x-auto" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
             {['Global', 'My Society', 'Society Map'].map(tab => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`px-6 py-2 rounded-lg font-bold text-[10px] uppercase tracking-widest transition-all cursor-pointer whitespace-nowrap ${
+                className={`flex-1 px-4 py-3 rounded-lg font-bold text-[11px] uppercase tracking-widest transition-all cursor-pointer whitespace-nowrap ${
                   activeTab === tab 
                     ? 'text-white shadow-lg' 
                     : 'text-gray-400 hover:text-gray-300'
                 }`}
                 style={activeTab === tab ? { backgroundColor: 'rgba(34, 197, 94, 0.15)', border: '1px solid rgba(34, 197, 94, 0.3)' } : {}}
               >
-                {tab === 'Global' ? '🌍 Global' : tab === 'My Society' ? '🏢 My Society' : '🗺️ Map'}
+                {tab === 'Global' ? '🌍 Global' : tab === 'My Society' ? '🏢 Society' : '🗺️ Map'}
               </button>
             ))}
           </div>
@@ -190,7 +192,7 @@ const Leaderboard = () => {
               >
                 <TileLayer
                   attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-                  url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                  url={theme === 'light' ? "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" : "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"}
                 />
                 
                 <MapAutoFit societies={societies} />
@@ -215,7 +217,7 @@ const Leaderboard = () => {
                       weight={userData?.societyId === society.id ? 3 : 1}
                     >
                       <Popup className="dark-popup">
-                        <div style={{ fontFamily: "Poppins, sans-serif", minWidth: "180px", padding: "8px", backgroundColor: '#111', color: '#fff' }}>
+                        <div style={{ fontFamily: "Poppins, sans-serif", minWidth: "180px", padding: "8px", backgroundColor: 'var(--color-surface)', color: 'var(--color-text-primary)' }}>
                           <h3 style={{ color: "#22c55e", margin: "0 0 8px 0", fontSize: "14px", fontWeight: 700, textTransform: "uppercase" }}>
                             🏢 {society.name}
                           </h3>
@@ -294,20 +296,20 @@ const Leaderboard = () => {
 
             {/* Building Stats */}
             {activeTab === 'My Society' && userData?.societyId && (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                 <div className="p-8 rounded-xl" style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
-                    <p className="text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color: '#6b7280' }}>Total Diverted</p>
-                    <p className="text-3xl font-bold tracking-tighter" style={{ color: '#22c55e' }}>
-                        {societyUsers.reduce((acc, m) => acc + (m.totalWasteKg || 0), 0).toFixed(1)} KG
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-8">
+                 <div className="p-6 md:p-8 rounded-xl" style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                    <p className="text-[10px] md:text-[11px] font-bold uppercase tracking-widest mb-2" style={{ color: '#6b7280' }}>Total Diverted</p>
+                    <p className="text-2xl md:text-3xl font-bold tracking-tighter" style={{ color: '#22c55e' }}>
+                        {societyUsers.reduce((acc, m) => acc + (m.totalWasteKg || 0), 0).toFixed(1)} <span className="text-xs">KG</span>
                     </p>
                  </div>
-                 <div className="p-8 rounded-xl text-center" style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
-                    <p className="text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color: '#6b7280' }}>Active Composts</p>
-                    <p className="text-3xl font-bold text-white tracking-tighter">{societyUsers.length}</p>
+                 <div className="p-6 md:p-8 rounded-xl text-center md:text-left" style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                    <p className="text-[10px] md:text-[11px] font-bold uppercase tracking-widest mb-2" style={{ color: '#6b7280' }}>Active Clusters</p>
+                    <p className="text-2xl md:text-3xl font-bold text-white tracking-tighter">{societyUsers.length}</p>
                  </div>
-                 <div className="p-8 rounded-xl text-right" style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
-                    <p className="text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color: '#6b7280' }}>Building MVP</p>
-                    <p className="text-3xl font-bold text-amber-500 tracking-tighter uppercase truncate pl-4">
+                 <div className="p-6 md:p-8 rounded-xl text-left col-span-2 md:col-span-1" style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                    <p className="text-[10px] md:text-[11px] font-bold uppercase tracking-widest mb-2" style={{ color: '#6b7280' }}>Building MVP</p>
+                    <p className="text-xl md:text-3xl font-bold text-amber-500 tracking-tight uppercase truncate">
                         {societyUsers[0]?.name?.split(' ')[0] || "None"} 🌟
                     </p>
                  </div>
@@ -320,10 +322,10 @@ const Leaderboard = () => {
                   <table className="w-full text-left border-collapse">
                     <thead>
                       <tr style={{ backgroundColor: 'rgba(255,255,255,0.02)' }}>
-                        <th className="px-10 py-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Rank</th>
-                        <th className="px-10 py-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Composter</th>
-                        <th className="px-10 py-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-center">Level</th>
-                        <th className="px-10 py-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-center">Impact</th>
+                        <th className="px-4 md:px-10 py-6 text-[11px] font-bold text-gray-400 uppercase tracking-widest">Rank</th>
+                        <th className="px-4 md:px-10 py-6 text-[11px] font-bold text-gray-400 uppercase tracking-widest">Composter</th>
+                        <th className="px-4 md:px-10 py-6 text-[11px] font-bold text-gray-400 uppercase tracking-widest text-center">Level</th>
+                        <th className="px-4 md:px-10 py-6 text-[11px] font-bold text-gray-400 uppercase tracking-widest text-center">Impact</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
@@ -331,27 +333,29 @@ const Leaderboard = () => {
                         const isMe = u.id === auth.currentUser.uid;
                         return (
                           <tr key={u.id} className={`transition-all ${isMe ? 'bg-white/5 shadow-inner' : 'hover:bg-white/2'}`}>
-                            <td className="px-10 py-6">
+                            <td className="px-4 md:px-10 py-6">
                                 {renderRank(i + 1)}
                             </td>
-                            <td className="px-10 py-6">
+                            <td className="px-4 md:px-10 py-6">
                               <div className="flex items-center gap-4">
                                 <div className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-sm" style={{ backgroundColor: 'rgba(34,197,94,0.15)', color: '#22c55e', border: '1px solid rgba(34,197,94,0.3)' }}>
                                   {u.name?.charAt(0).toUpperCase()}
                                 </div>
-                                <div>
-                                  <p className="font-bold text-white text-sm tracking-tight">{u.name}</p>
-                                  <p className="text-[9px] font-semibold uppercase tracking-wider" style={{ color: '#4b5563' }}>{u.streak || 0} DAY STREAK 🔥</p>
+                                <div className="min-w-0">
+                                  <p className="font-bold text-white text-base md:text-sm tracking-tight truncate">{u.name}</p>
+                                  <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: '#4b5563' }}>{u.streak || 0} DAY STREAK 🔥</p>
                                 </div>
                               </div>
                             </td>
-                            <td className="px-10 py-6 text-center">
-                              <span className="px-3 py-1 rounded-lg text-[9px] font-bold uppercase" style={{ backgroundColor: 'rgba(34,197,94,0.1)', color: '#22c55e', border: '1px solid rgba(34,197,94,0.2)' }}>LVL {u.level || 1}</span>
-                              <p className="text-[9px] font-bold text-gray-400 mt-2 tracking-widest uppercase">{u.xp || 0} XP</p>
+                            <td className="px-4 md:px-10 py-6 text-center">
+                              <div className="inline-flex flex-col items-center">
+                                <span className="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase whitespace-nowrap mb-1" style={{ backgroundColor: 'rgba(34,197,94,0.15)', color: '#22c55e', border: '1px solid rgba(34,197,94,0.3)' }}>LVL {u.level || 1}</span>
+                                <p className="text-[10px] font-bold text-gray-500 tracking-widest uppercase">{u.xp || 0} XP</p>
+                              </div>
                             </td>
-                            <td className="px-10 py-6 text-center">
-                              <p className="text-xl font-bold text-white tracking-tighter">{u.totalWasteKg?.toFixed(1) || 0}</p>
-                              <p className="text-[8px] font-bold uppercase tracking-widest" style={{ color: '#4b5563' }}>KG Diverted</p>
+                            <td className="px-4 md:px-10 py-6 text-center">
+                              <p className="text-xl font-bold text-white tracking-tighter">{(u.totalWasteKg || 0).toFixed(1)}</p>
+                              <p className="text-[9px] font-bold uppercase tracking-widest" style={{ color: '#4b5563' }}>KG</p>
                             </td>
                           </tr>
                         );

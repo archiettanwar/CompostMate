@@ -5,10 +5,12 @@ import {
   createUserWithEmailAndPassword, 
   GoogleAuthProvider, 
   signInWithRedirect,
+  signInWithPopup,
   getRedirectResult,
   indexedDBLocalPersistence,
   setPersistence
 } from "firebase/auth";
+import { Capacitor } from "@capacitor/core";
 import { doc, setDoc, getDoc } from "firebase/firestore";
 import { auth, db, getUserRole } from "../lib/firebase.js";
 
@@ -124,8 +126,15 @@ const Auth = () => {
       // Use indexedDB for better survival on mobile reloads
       await setPersistence(auth, indexedDBLocalPersistence);
       
-      // Use redirect for mobile compatibility
-      await signInWithRedirect(auth, provider);
+      // Use popup for desktop, redirect for mobile
+      if (Capacitor.isNativePlatform()) {
+        await signInWithRedirect(auth, provider);
+      } else {
+        const result = await signInWithPopup(auth, provider);
+        if (result) {
+          await handlePostAuth(result.user);
+        }
+      }
     } catch (err) {
       console.error("Google Auth Error:", err);
       setError(err.message.replace("Firebase: ", ""));

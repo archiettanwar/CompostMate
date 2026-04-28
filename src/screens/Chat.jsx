@@ -80,20 +80,20 @@ const Chat = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#0a0a0a' }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--color-bg)' }}>
         <div className="font-bold animate-pulse text-xl tracking-widest uppercase text-[#22c55e]">Initializing Chat...</div>
       </div>
     );
   }
 
   return (
-    <div className="flex min-h-screen" style={{ backgroundColor: '#0a0a0a' }}>
+    <div className="flex min-h-screen" style={{ backgroundColor: 'var(--color-bg)' }}>
       <TopNav />
 
       {/* Main Chat Content Area */}
       <div className="pt-28 px-6 lg:px-8 pb-10 min-h-screen max-w-7xl mx-auto w-full">
         {/* Top Bar */}
-        <header className="px-8 py-6 h-28 flex flex-col justify-center shrink-0 z-10" style={{ backgroundColor: 'rgba(255,255,255,0.02)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+        <header className="px-8 py-6 h-28 flex flex-col justify-center shrink-0 z-10" style={{ backgroundColor: 'var(--color-surface)', borderBottom: '1px solid var(--color-border)' }}>
           <h1 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
             <span>💬</span> CompostBot
           </h1>
@@ -124,7 +124,7 @@ const Chat = () => {
                 }`}
                 style={msg.sender === "user"
                   ? { background: 'linear-gradient(to bottom, #22c55e, #16a34a)', boxShadow: '0 8px 32px rgba(34,197,94,0.15)' }
-                  : { backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }
+                  : { backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }
                 }
               >
                 {msg.text}
@@ -159,7 +159,7 @@ const Chat = () => {
             <form 
               onSubmit={handleSend} 
               className="rounded-full p-2 pl-8 flex items-center gap-4 shadow-2xl backdrop-blur-md"
-              style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)' }}
+              style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}
             >
               <input
                 type="text"

@@ -154,7 +154,7 @@ const Profile = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#0a0a0a' }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--color-bg)' }}>
         <div className="font-bold animate-pulse text-xl tracking-widest uppercase" style={{ color: '#22c55e' }}>Loading Profile...</div>
       </div>
     );
@@ -163,13 +163,13 @@ const Profile = () => {
   const userInitial = (user?.displayName || userData?.name || user?.email || "C")[0].toUpperCase();
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#0a0a0a' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--color-bg)' }}>
       <TopNav />
       
       <div className="pt-28 px-6 lg:px-8 pb-10 min-h-screen max-w-7xl mx-auto w-full">
         {/* Header Section */}
         <div className="mb-12">
-          <div className="flex items-center gap-8 p-8 rounded-xl relative overflow-hidden" style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+          <div className="flex items-center gap-8 p-8 rounded-xl relative overflow-hidden" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
             {/* Background Accent */}
             <div className="absolute top-0 right-0 w-64 h-64 rounded-full -mr-32 -mt-32 blur-3xl pointer-events-none" style={{ backgroundColor: 'rgba(34,197,94,0.06)' }}></div>
             
@@ -263,7 +263,7 @@ const Profile = () => {
             { label: "Day Streak", value: userData?.streak ?? 0, sub: "Consecutive Days", icon: "🔥" },
             { label: "Waste Logged", value: (userData?.totalWasteKg ?? 0).toFixed(1), sub: "Kilograms", icon: "⚖️" }
           ].map((stat, i) => (
-            <div key={i} className="p-6 rounded-xl hover:translate-y-[-4px] transition-all group" style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+            <div key={i} className="p-6 rounded-xl hover:translate-y-[-4px] transition-all group" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
               <div className="flex items-center justify-between mb-4">
                 <span className="font-bold text-[10px] uppercase tracking-widest" style={{ color: '#6b7280' }}>{stat.label}</span>
                 <span className="text-xl grayscale group-hover:grayscale-0 transition-all">{stat.icon}</span>

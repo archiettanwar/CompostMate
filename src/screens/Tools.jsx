@@ -133,7 +133,7 @@ const Tools = () => {
   };
 
   return (
-    <div className="min-h-screen flex" style={{ backgroundColor: '#0a0a0a' }}>
+    <div className="min-h-screen flex" style={{ backgroundColor: 'var(--color-bg)' }}>
       <TopNav />
       <div className="flex-1 pt-24 md:pt-28 p-8">
         {!selectedProduct ? (
@@ -186,7 +186,7 @@ const Tools = () => {
                     key={product.id}
                     onClick={() => setSelectedProduct(product)}
                     className="rounded-2xl overflow-hidden shadow-2xl flex flex-col hover:translate-y-[-4px] transition-all duration-300 group cursor-pointer"
-                    style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
+                    style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}
                   >
                     <div className="relative h-56 overflow-hidden">
                       <img src={product.image} alt={product.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />

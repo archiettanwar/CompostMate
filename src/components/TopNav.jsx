@@ -5,14 +5,19 @@ import { doc, getDoc } from "firebase/firestore";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { BADGES, checkBadges } from "../lib/badges";
 import { useNotifications } from "../hooks/useNotifications";
+import { useTheme } from "../context/ThemeContext";
+import { useNotification } from "../context/NotificationContext";
 
 const TopNav = () => {
+  const { showAlert } = useNotification();
   const [user, setUser] = useState(null);
   const [userData, setUserData] = useState(null);
   const navigate = useNavigate();
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { unreadCount } = useNotifications();
+  const { theme, setTheme } = useTheme();
+  const [isThemeMenuOpen, setIsThemeMenuOpen] = useState(false);
 
   useEffect(() => {
     let unsubscribeUser = null;
@@ -29,8 +34,13 @@ const TopNav = () => {
           const data = docSnap.data();
           if (data.role === 'banned') {
              signOut(auth);
-             alert("System Alert: Your account has been suspended by the Global Administrator.");
-             window.location.href = "/";
+             showAlert({
+               title: "System Suspension",
+               message: "Your account has been suspended by the Global Administrator.",
+               type: "danger"
+             }).then(() => {
+               navigate("/");
+             });
              return;
           }
           setUserData(data);
@@ -90,7 +100,11 @@ const TopNav = () => {
     ...(userData?.role === 'society_admin' || userData?.role === 'super_admin' ? [{ id: 'admin', label: 'Manage', path: '/admin' }] : []),
   ];
 
-  const navItems = [
+  const isGodMode = userData?.email === 'archiettanwar71@gmail.com';
+  
+  const navItems = (userData?.role === 'super_admin' && !isGodMode) ? [
+    { id: 'superadmin', label: 'System Management', path: '/superadmin' },
+  ] : [
     {
       id: 'dashboard_group', label: 'Dashboard',
       subItems: [
@@ -114,9 +128,9 @@ const TopNav = () => {
         { id: 'tools', label: 'Tools', path: '/tools' },
       ]
     },
-    ...(userData?.role === 'resident' ? [{ id: 'perks', label: 'Perks', path: '/perks' }] : []),
-    ...(userData?.role === 'super_admin' ? [{ id: 'superadmin', label: 'System', path: '/superadmin' }] : []),
-    ...((userData?.societyId || userData?.role === 'society_admin' || userData?.role === 'super_admin' || !userData?.societyId) ? [{
+    ...(userData?.role === 'resident' || isGodMode ? [{ id: 'perks', label: 'Perks', path: '/perks' }] : []),
+    ...(isGodMode ? [{ id: 'superadmin', label: 'System', path: '/superadmin' }] : []),
+    ...((userData?.societyId || userData?.role === 'society_admin' || !userData?.societyId) ? [{
       id: 'society_group', label: 'Society',
       subItems: baseSocietyItems
     }] : []),
@@ -130,15 +144,15 @@ const TopNav = () => {
 
   return (
     <>
-      <header className="fixed top-0 left-0 w-full z-50 transition-all duration-300 border-b" style={{ backgroundColor: 'rgba(10, 10, 10, 0.95)', backdropFilter: 'blur(10px)', borderColor: 'rgba(255,255,255,0.08)' }}>
+      <header className="fixed top-0 left-0 w-full z-50 transition-all duration-300 border-b" style={{ backgroundColor: 'var(--color-bg)', opacity: 0.95, backdropFilter: 'blur(10px)', borderColor: 'var(--color-border)' }}>
         <div className="w-full px-6 md:px-12 lg:px-16 h-20 flex items-center justify-between">
           
           {/* Branding */}
           <div className="flex items-center cursor-pointer shrink-0" onClick={() => navigate('/dashboard')}>
             <span className="text-3xl filter drop-shadow-md mr-3">🌱</span>
             <div className="hidden sm:block">
-              <h1 className="text-xl font-bold text-white tracking-tight">CompostMate</h1>
-              <p className="text-[10px] font-medium mt-0.5" style={{ color: '#6b7280' }}>Turning waste into gold</p>
+              <h1 className="text-xl font-bold tracking-tight" style={{ color: 'var(--color-text-primary)' }}>CompostMate</h1>
+              <p className="text-[10px] font-medium mt-0.5" style={{ color: 'var(--color-text-muted)' }}>Turning waste into gold</p>
             </div>
           </div>
 
@@ -228,21 +242,59 @@ const TopNav = () => {
           </nav>
 
           {/* Profile & Notifications & Hamburger */}
-          <div className="flex items-center gap-2 md:gap-4 shrink-0">
-            {/* Notification Bell */}
+          <div className="flex items-center gap-1 md:gap-2 shrink-0">
+            {/* Notifications */}
             <button 
               onClick={() => navigate('/notifications')}
-              className="relative p-2 text-[#9ca3af] hover:text-white transition-colors"
+              className="p-3 hover:bg-white/5 rounded-xl transition-all relative group"
+              title="Notifications"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0" />
-              </svg>
+              <span className="text-2xl opacity-60 group-hover:opacity-100 transition-opacity">🔔</span>
               {unreadCount > 0 && (
-                <div className="absolute top-1.5 right-1.5 w-4 h-4 rounded-full flex items-center justify-center font-bold text-[8px] text-white animate-pulse" style={{ backgroundColor: '#ef4444', border: '1px solid #0a0a0a' }}>
+                <div className="absolute top-2 right-2 w-4 h-4 rounded-full flex items-center justify-center font-bold text-[8px] text-white animate-pulse" style={{ backgroundColor: '#ef4444', border: '1px solid var(--color-bg)' }}>
                   {unreadCount > 9 ? '9+' : unreadCount}
                 </div>
               )}
             </button>
+
+            {/* Theme Switcher */}
+            <div className="relative">
+              <button 
+                onClick={() => setIsThemeMenuOpen(!isThemeMenuOpen)}
+                className="p-3 hover:bg-white/5 rounded-xl transition-all group"
+                title="Change Theme"
+              >
+                <span className="text-2xl opacity-60 group-hover:opacity-100 transition-opacity">
+                  {theme === 'dark' ? '🌙' : theme === 'light' ? '☀️' : '🖥️'}
+                </span>
+              </button>
+              
+              {isThemeMenuOpen && (
+                <>
+                  <div className="fixed inset-0 z-10" onClick={() => setIsThemeMenuOpen(false)} />
+                  <div className="absolute top-full right-0 mt-2 w-36 rounded-2xl shadow-xl z-20 border p-2 space-y-1" style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }}>
+                    {[
+                      { id: 'light', label: 'Light', icon: '☀️' },
+                      { id: 'dark', label: 'Dark', icon: '🌙' },
+                      { id: 'system', label: 'System', icon: '🖥️' }
+                    ].map(t => (
+                      <button
+                        key={t.id}
+                        onClick={() => { setTheme(t.id); setIsThemeMenuOpen(false); }}
+                        className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl transition-all duration-200 cursor-pointer ${
+                          theme === t.id
+                            ? 'bg-green-500/10 text-[#22c55e]'
+                            : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-border)]'
+                        }`}
+                      >
+                        <span className="text-sm">{t.icon}</span>
+                        <span className="font-semibold text-xs">{t.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
 
             {/* Desktop Profile */}
             <div
@@ -255,7 +307,6 @@ const TopNav = () => {
               onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.08)'}
               onMouseLeave={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)'}
             >
-
               <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold shadow-md text-sm overflow-hidden shrink-0 ${
                 userData?.photoURL || user?.photoURL ? 'bg-white' : ''
               }`}
@@ -271,16 +322,10 @@ const TopNav = () => {
 
             {/* Mobile Hamburger Menu */}
             <button 
-              className="xl:hidden p-2 text-[#9ca3af] hover:text-white"
+              className="xl:hidden p-3 hover:bg-white/5 rounded-xl transition-all group"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-7 h-7">
-                {isMobileMenuOpen ? (
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                ) : (
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-                )}
-              </svg>
+              <span className="text-2xl opacity-60 group-hover:opacity-100 transition-opacity">≡</span>
             </button>
           </div>
         </div>
@@ -293,9 +338,9 @@ const TopNav = () => {
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsMobileMenuOpen(false)} />
           
           {/* Drawer */}
-          <div className="absolute right-0 top-0 h-full w-72 flex flex-col border-l transition-transform transform translate-x-0" style={{ backgroundColor: '#0a0a0a', borderColor: 'rgba(255,255,255,0.08)' }}>
-            <div className="h-20 border-b flex items-center px-6" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
-              <span className="text-lg font-bold text-white tracking-tight">Navigation</span>
+          <div className="absolute right-0 top-0 h-full w-72 flex flex-col border-l transition-transform transform translate-x-0" style={{ backgroundColor: 'var(--color-bg)', borderColor: 'var(--color-border)' }}>
+            <div className="h-20 border-b flex items-center px-6" style={{ borderColor: 'var(--color-border)' }}>
+              <span className="text-lg font-bold tracking-tight" style={{ color: 'var(--color-text-primary)' }}>Navigation</span>
             </div>
             
             <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
@@ -315,7 +360,6 @@ const TopNav = () => {
                         }`}
                       >
                         <div className="flex items-center gap-3">
-                          <span className="text-lg">{item.icon}</span>
                           <span className="font-semibold text-sm">{item.label}</span>
                         </div>
                         <svg 
@@ -348,7 +392,6 @@ const TopNav = () => {
                                     : 'text-[#9ca3af] hover:text-white'
                                 }`}
                               >
-                                <span className="text-base">{subItem.icon}</span>
                                 <span className="font-medium text-sm">{subItem.label}</span>
                               </button>
                             );
@@ -370,7 +413,6 @@ const TopNav = () => {
                           : 'text-[#9ca3af] hover:text-white hover:bg-white/5'
                       }`}
                     >
-                      <span className="text-lg">{item.icon}</span>
                       <span className="font-semibold text-sm">{item.label}</span>
                     </button>
                   </div>
@@ -397,7 +439,7 @@ const TopNav = () => {
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-white font-semibold text-sm truncate">
+                  <p className="font-semibold text-sm truncate" style={{ color: 'var(--color-text-primary)' }}>
                     {(userData?.name || user?.displayName || "Composter").split(' ')[0]}
                   </p>
                   <p className="text-[10px] font-medium truncate" style={{ color: '#6b7280' }}>

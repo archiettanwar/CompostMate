@@ -4,6 +4,9 @@ import { auth, db } from "../lib/firebase";
 import { doc, getDoc, updateDoc, arrayUnion, increment, query, collection, where, getDocs } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import TopNav from "../components/TopNav";
+import { BarcodeScanner } from '@capacitor-mlkit/barcode-scanning';
+import { Capacitor } from '@capacitor/core';
+import { useNotification } from "../context/NotificationContext";
 
 const JoinSociety = () => {
   const [userData, setUserData] = useState(null);
@@ -14,6 +17,7 @@ const JoinSociety = () => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const navigate = useNavigate();
+  const { showToast } = useNotification();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -100,23 +104,62 @@ const JoinSociety = () => {
     }
   };
 
+  const handleScanQR = async () => {
+    if (!Capacitor.isNativePlatform()) {
+      setError("QR Scanning is only available on the mobile app.");
+      return;
+    }
+
+    try {
+      // 1. Check/Request Permission
+      const status = await BarcodeScanner.checkPermissions();
+      if (status.camera !== 'granted') {
+        const newStatus = await BarcodeScanner.requestPermissions();
+        if (newStatus.camera !== 'granted') {
+          setError("Camera permission denied. Please enable it in settings.");
+          return;
+        }
+      }
+
+      // 2. Start Scan
+      const { barcodes } = await BarcodeScanner.scan();
+      if (barcodes.length > 0) {
+        const scannedValue = barcodes[0].rawValue; // e.g. COMPOSTMATE-A1B2C3
+        
+        if (scannedValue.startsWith("COMPOSTMATE-")) {
+          const code = scannedValue.replace("COMPOSTMATE-", "");
+          setInviteCode(code);
+          // Auto-trigger join if possible, but let them enter flat number first
+          showToast("QR Code Scanned! Enter your Flat Number to finish. ✨");
+        } else {
+          setError("Invalid QR Code. Please scan a CompostMate invite QR.");
+        }
+      }
+    } catch (err) {
+      console.error("Scan Error:", err);
+      if (err.message !== 'User cancelled') {
+        setError("Failed to start scanner.");
+      }
+    }
+  };
+
   if (initialLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#0a0a0a' }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--color-bg)' }}>
         <div className="font-bold animate-pulse text-xl tracking-widest uppercase text-[#22c55e]">Verifying Status...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#0a0a0a' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--color-bg)' }}>
       <TopNav />
       
       <div className="pt-28 px-6 lg:px-8 pb-10 min-h-screen max-w-7xl mx-auto w-full">
         {/* Top Bar */}
         <div className="flex justify-between items-end mb-10 pb-8" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
           <div>
-            <h1 className="text-3xl font-bold text-white tracking-tight uppercase mb-1">Join Society</h1>
+            <h1 className="text-3xl font-bold tracking-tight uppercase mb-1" style={{ color: 'var(--color-text-primary)' }}>Join Society</h1>
             <p className="font-semibold uppercase text-[10px] tracking-widest" style={{ color: '#6b7280' }}>Connect with your building community</p>
           </div>
           <button 
@@ -129,10 +172,10 @@ const JoinSociety = () => {
         </div>
 
         <div className="max-w-xl mx-auto mt-20">
-          <div className="p-12 rounded-2xl text-center animate-in fade-in slide-in-from-bottom-4 duration-700" style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
-            <div className="w-20 h-20 rounded-2xl flex items-center justify-center text-4xl mx-auto mb-8 grayscale" style={{ backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>🏢</div>
+          <div className="p-12 rounded-2xl text-center animate-in fade-in slide-in-from-bottom-4 duration-700" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
+            <div className="w-20 h-20 rounded-2xl flex items-center justify-center text-4xl mx-auto mb-8 grayscale" style={{ backgroundColor: 'var(--color-bg)', border: '1px solid var(--color-border)' }}>🏢</div>
             
-            <h2 className="text-2xl font-bold text-white tracking-tight mb-2 uppercase">Enter Invite Code</h2>
+            <h2 className="text-2xl font-bold tracking-tight mb-2 uppercase" style={{ color: 'var(--color-text-primary)' }}>Enter Invite Code</h2>
             <p className="font-semibold text-[10px] uppercase tracking-widest mb-10 leading-relaxed max-w-[280px] mx-auto" style={{ color: '#4b5563' }}>
               Provided by your building secretary
             </p>
@@ -168,7 +211,7 @@ const JoinSociety = () => {
                 onChange={(e) => setFlatNumber(e.target.value)}
                 placeholder="FLAT NO. (E.G. A-101)"
                 className="w-full rounded-xl px-6 py-4 text-sm font-bold text-center text-white placeholder-gray-700 outline-none transition-all"
-                style={{ backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)' }}
+                style={{ backgroundColor: 'var(--color-bg)', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }}
                 required
                 disabled={loading || success}
               />
@@ -189,7 +232,11 @@ const JoinSociety = () => {
               <div className="flex-1 h-px" style={{ backgroundColor: 'rgba(255,255,255,0.06)' }}></div>
             </div>
 
-            <button className="w-full py-4 rounded-xl border font-bold text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-3 cursor-pointer" style={{ backgroundColor: 'rgba(255,255,255,0.02)', borderColor: 'rgba(255,255,255,0.06)', color: '#4b5563' }}>
+            <button 
+              onClick={handleScanQR}
+              className="w-full py-4 rounded-xl border font-bold text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-3 cursor-pointer" 
+              style={{ backgroundColor: 'rgba(255,255,255,0.02)', borderColor: 'rgba(255,255,255,0.06)', color: '#22c55e' }}
+            >
               📸 Scan QR Code
             </button>
 

@@ -169,8 +169,8 @@ const AdminDashboard = () => {
 
   if (loading && !userData) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#0a0a0a' }}>
-        <div className="font-bold animate-pulse text-xl tracking-widest uppercase text-[#22c55e]">Admin Access...</div>
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--color-bg)' }}>
+        <div className="font-bold animate-pulse text-xl tracking-widest uppercase" style={{ color: '#22c55e' }}>Admin Access...</div>
       </div>
     );
   }
@@ -186,16 +186,16 @@ const AdminDashboard = () => {
               { label: "Active This Week", value: members.length, icon: "🔥" },
               { label: "Discounts Given", value: members.filter(m => m.discount > 0).length, icon: "🎁" }
             ].map((stat, i) => (
-              <div key={i} className="p-8 rounded-2xl transition-all group" style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <div key={i} className="p-8 rounded-2xl transition-all group" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
                 <div className="text-2xl mb-4 grayscale group-hover:grayscale-0 transition-all">{stat.icon}</div>
-                <p className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: '#6b7280' }}>{stat.label}</p>
-                <p className="text-3xl font-bold text-white tracking-tight">{stat.value}</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: 'var(--color-text-muted)' }}>{stat.label}</p>
+                <p className="text-3xl font-bold tracking-tight" style={{ color: 'var(--color-text-primary)' }}>{stat.value}</p>
               </div>
             ))}
             
             {/* Broadcast Widget */}
-            <div className="md:col-span-2 lg:col-span-4 mt-8 rounded-2xl p-8" style={{ backgroundColor: 'rgba(245,158,11,0.05)', border: '1px solid rgba(245,158,11,0.1)' }}>
-               <h3 className="text-xl font-bold text-white tracking-tight mb-2">📢 Society Broadcast</h3>
+            <div className="md:col-span-2 lg:col-span-4 mt-8 rounded-2xl p-8" style={{ backgroundColor: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.2)' }}>
+               <h3 className="text-xl font-bold tracking-tight mb-2" style={{ color: 'var(--color-text-primary)' }}>📢 Society Broadcast</h3>
                <p className="text-[10px] font-bold uppercase tracking-widest mb-6" style={{ color: '#f59e0b' }}>Send a real-time push alert to every member's inbox</p>
                <div className="flex flex-col md:flex-row gap-4">
                  <input 
@@ -204,8 +204,8 @@ const AdminDashboard = () => {
                    onChange={(e) => setBroadcastMessage(e.target.value)}
                    disabled={isBroadcasting}
                    placeholder="e.g. Please secure your bins, heavy rain expected tomorrow..."
-                   className="flex-1 rounded-xl px-6 py-4 font-bold text-white outline-none transition-all"
-                   style={{ backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}
+                   className="flex-1 rounded-xl px-6 py-4 font-bold outline-none transition-all"
+                   style={{ backgroundColor: 'var(--color-bg)', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }}
                  />
                  <button 
                    onClick={handleBroadcast}
@@ -221,45 +221,45 @@ const AdminDashboard = () => {
         );
       case 'Members':
         return (
-          <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+          <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr style={{ backgroundColor: 'rgba(255,255,255,0.02)' }}>
-                    <th className="px-10 py-6 text-[9px] font-bold text-gray-500 uppercase tracking-widest border-b border-white/5">Resident</th>
-                    <th className="px-10 py-6 text-[9px] font-bold text-gray-500 uppercase tracking-widest border-b border-white/5 text-center">Stats / Contribution</th>
-                    <th className="px-10 py-6 text-[9px] font-bold text-gray-500 uppercase tracking-widest border-b border-white/5 text-center">Benefit</th>
-                    <th className="px-10 py-6 text-[9px] font-bold text-gray-500 uppercase tracking-widest border-b border-white/5 text-right">Action</th>
+                  <tr style={{ backgroundColor: 'var(--color-bg)' }}>
+                    <th className="px-10 py-6 text-[9px] font-bold text-gray-500 uppercase tracking-widest border-b border-[var(--color-border)]">Resident</th>
+                    <th className="px-10 py-6 text-[9px] font-bold text-gray-500 uppercase tracking-widest border-b border-[var(--color-border)] text-center">Stats / Contribution</th>
+                    <th className="px-10 py-6 text-[9px] font-bold text-gray-500 uppercase tracking-widest border-b border-[var(--color-border)] text-center">Benefit</th>
+                    <th className="px-10 py-6 text-[9px] font-bold text-gray-500 uppercase tracking-widest border-b border-[var(--color-border)] text-right">Action</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-white/5">
+                <tbody className="divide-y divide-[var(--color-border)]">
                   {members.map(member => (
                     <tr key={member.id} className="hover:bg-white/5 transition-all group">
                       <td className="px-10 py-8">
                         <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 rounded-xl flex items-center justify-center font-bold text-lg overflow-hidden shrink-0" style={{ backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                          <div className="w-12 h-12 rounded-xl flex items-center justify-center font-bold text-lg overflow-hidden shrink-0" style={{ backgroundColor: 'var(--color-bg)', border: '1px solid var(--color-border)' }}>
                             {member.profilePic ? (
                               <img src={member.profilePic} className="w-full h-full object-cover" alt={member.name} />
                             ) : (
-                              <span className="text-white opacity-40">{member.name?.charAt(0).toUpperCase()}</span>
+                              <span className="opacity-40" style={{ color: 'var(--color-text-primary)' }}>{member.name?.charAt(0).toUpperCase()}</span>
                             )}
                           </div>
                           <div className="min-w-0">
                             <div className="flex items-center gap-2 mb-0.5">
-                              <p className="font-bold text-white text-sm tracking-tight uppercase truncate">{member.name}</p>
+                              <p className="font-bold text-sm tracking-tight uppercase truncate" style={{ color: 'var(--color-text-primary)' }}>{member.name}</p>
                               {member.flatNumber && (
-                                <span className="px-2 py-0.5 rounded-md text-[8px] font-bold text-gray-600 uppercase tracking-widest whitespace-nowrap" style={{ backgroundColor: 'rgba(255,255,255,0.03)' }}>
+                                <span className="px-2 py-0.5 rounded-md text-[8px] font-bold uppercase tracking-widest whitespace-nowrap" style={{ backgroundColor: 'var(--color-bg)', color: 'var(--color-text-muted)' }}>
                                   {member.flatNumber}
                                 </span>
                               )}
                             </div>
-                            <p className="text-[9px] text-gray-600 font-bold uppercase tracking-wider truncate">{member.email}</p>
+                            <p className="text-[9px] font-bold uppercase tracking-wider truncate" style={{ color: 'var(--color-text-muted)' }}>{member.email}</p>
                           </div>
                         </div>
                       </td>
                       <td className="px-10 py-8 text-center">
-                        <p className="font-bold text-sm text-white">{member.xp || 0} <span className="text-[9px] text-gray-600 uppercase ml-1">XP</span></p>
-                        <p className="text-[9px] text-gray-600 font-bold uppercase tracking-widest mt-1">{(member.totalWasteKg || 0).toFixed(1)} kg logged</p>
+                        <p className="font-bold text-sm" style={{ color: 'var(--color-text-primary)' }}>{member.xp || 0} <span className="text-[9px] uppercase ml-1" style={{ color: 'var(--color-text-muted)' }}>XP</span></p>
+                        <p className="text-[9px] font-bold uppercase tracking-widest mt-1" style={{ color: 'var(--color-text-muted)' }}>{(member.totalWasteKg || 0).toFixed(1)} kg logged</p>
                       </td>
                       <td className="px-10 py-8 text-center">
                         {member.discount > 0 ? (
@@ -419,19 +419,19 @@ const AdminDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen flex" style={{ backgroundColor: '#0a0a0a' }}>
+    <div className="min-h-screen flex" style={{ backgroundColor: 'var(--color-bg)' }}>
       <TopNav />
       
       <div className="flex-1 pt-24 md:pt-28 p-10 max-w-7xl mx-auto">
         {/* Top Bar */}
-        <div className="flex justify-between items-end mb-10 pb-8" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+        <div className="flex justify-between items-end mb-10 pb-8" style={{ borderBottom: '1px solid var(--color-border)' }}>
           <div>
-            <h1 className="text-3xl font-bold text-white tracking-tight uppercase mb-1">Secretary Cabinet</h1>
-            <p className="font-semibold uppercase text-[10px] tracking-widest" style={{ color: '#6b7280' }}>
+            <h1 className="text-3xl font-bold tracking-tight uppercase mb-1" style={{ color: 'var(--color-text-primary)' }}>Secretary Cabinet</h1>
+            <p className="font-semibold uppercase text-[10px] tracking-widest" style={{ color: 'var(--color-text-muted)' }}>
                 Managing {society?.name || "Society"} • {society?.city || "City"}
             </p>
           </div>
-          <div className="hidden lg:flex items-center gap-3 px-5 py-2.5 rounded-xl border" style={{ backgroundColor: 'rgba(255,255,255,0.04)', borderColor: 'rgba(255,255,255,0.1)' }}>
+          <div className="hidden lg:flex items-center gap-3 px-5 py-2.5 rounded-xl border" style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }}>
              <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
              <span className="font-bold text-[10px] uppercase tracking-widest" style={{ color: '#22c55e' }}>Admin Control Active</span>
           </div>
@@ -445,8 +445,8 @@ const AdminDashboard = () => {
               onClick={() => setActiveTab(tab)}
               className={`px-8 py-4 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all cursor-pointer whitespace-nowrap border ${
                 activeTab === tab 
-                  ? 'bg-white text-black border-white' 
-                  : 'bg-transparent text-gray-500 border-white/10 hover:border-white/20'
+                  ? 'bg-[#22c55e] text-white border-[#22c55e]' 
+                  : 'bg-transparent text-[var(--color-text-secondary)] border-[var(--color-border)] hover:border-[var(--color-text-muted)]'
               }`}
             >
               {tab}
@@ -461,11 +461,11 @@ const AdminDashboard = () => {
         {/* Discount Modal */}
         {showDiscountModal && (
           <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-            <div className="w-full max-w-md rounded-2xl p-12 border animate-in zoom-in-95 duration-300" style={{ backgroundColor: '#0f0f0f', borderColor: 'rgba(255,255,255,0.1)' }}>
+            <div className="w-full max-w-md rounded-2xl p-12 border animate-in zoom-in-95 duration-300" style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }}>
                 <div className="text-center mb-10">
-                    <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-6 grayscale" style={{ backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>🎁</div>
-                    <h2 className="text-2xl font-bold text-white tracking-tight uppercase">Set Member Reward</h2>
-                    <p className="font-semibold text-[10px] uppercase tracking-widest mt-2 px-10" style={{ color: '#4b5563' }}>Resident: {selectedMember?.name}</p>
+                    <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-6 grayscale" style={{ backgroundColor: 'var(--color-bg)', border: '1px solid var(--color-border)' }}>🎁</div>
+                    <h2 className="text-2xl font-bold tracking-tight uppercase" style={{ color: 'var(--color-text-primary)' }}>Set Member Reward</h2>
+                    <p className="font-semibold text-[10px] uppercase tracking-widest mt-2 px-10" style={{ color: 'var(--color-text-muted)' }}>Resident: {selectedMember?.name}</p>
                 </div>
 
                 <div className="space-y-8">
@@ -491,7 +491,7 @@ const AdminDashboard = () => {
                             onChange={(e) => setDiscountNote(e.target.value)}
                             placeholder="e.g. Excellent waste segregation consistency"
                             className="w-full rounded-xl px-8 py-5 text-sm font-bold text-white placeholder-gray-800 outline-none transition-all h-32 resize-none"
-                            style={{ backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)' }}
+                            style={{ backgroundColor: 'var(--color-bg)', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }}
                         />
                     </div>
                     

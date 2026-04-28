@@ -1,20 +1,27 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { auth, db } from "../lib/firebase";
-import { collection, getDocs, doc, getDoc, updateDoc, deleteDoc } from "firebase/firestore";
+import { collection, getDocs, doc, getDoc, updateDoc, deleteDoc, query, orderBy, limit, addDoc, serverTimestamp } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import TopNav from "../components/TopNav";
+import { useNotification } from '../context/NotificationContext';
 
 const SuperAdmin = () => {
+  const { showConfirm, showAlert, showToast } = useNotification();
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState([]);
   const [societies, setSocieties] = useState({});
   const [localities, setLocalities] = useState([]);
-  
-  // CSV Modal State & Filters
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('DASHBOARD');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortConfig, setSortConfig] = useState('WASTE_DESC'); 
   const [filterMode, setFilterMode] = useState('ALL'); 
   const [filterParam, setFilterParam] = useState(''); 
+
+  // Broadcast State
+  const [broadcastTitle, setBroadcastTitle] = useState("");
+  const [broadcastMessage, setBroadcastMessage] = useState("");
+  const [isBroadcasting, setIsBroadcasting] = useState(false);
   
   const navigate = useNavigate();
 
@@ -34,8 +41,6 @@ const SuperAdmin = () => {
               navigate("/dashboard");
               return;
             }
-            
-            // Authorized
             await fetchGlobalData();
           }
         } catch (error) {
@@ -45,7 +50,6 @@ const SuperAdmin = () => {
       });
       return () => unsubscribe();
     };
-    
     initSuperAdmin();
   }, [navigate]);
 
@@ -78,126 +82,148 @@ const SuperAdmin = () => {
     }
   };
 
-  const getFilteredUsers = () => {
-    return users.filter(user => {
-      if (filterMode === 'ALL') return true;
-      if (filterMode === 'UNASSIGNED') return !user.societyId;
-      if (filterMode === 'SOCIETY') return user.societyId === filterParam;
-      if (filterMode === 'LOCALITY') {
-        if (!user.societyId) return false; 
-        const soc = societies[user.societyId];
-        return soc && soc.city && soc.city.toUpperCase() === filterParam;
-      }
-      return true;
+  // --- Broadcast System ---
+  const handleBroadcast = async () => {
+    const confirmed = await showConfirm({
+      title: "Confirm Broadcast",
+      message: "CRITICAL: This will send a notification to EVERY user in the network. Proceed?",
+      confirmLabel: "DISPATCH",
+      type: "warning"
     });
-  };
+    if (!confirmed) return;
 
-  const currentUsers = getFilteredUsers();
-
-  const handleDownloadCSV = () => {
-    if (currentUsers.length === 0) {
-        alert("No users found to export!");
-        return;
-    }
-
-    const headers = [
-      "User ID",
-      "Name",
-      "Role",
-      "XP Points",
-      "Total Waste Diverted (KG)",
-      "Streak (Days)",
-      "Society ID",
-      "Society Name",
-      "Locality (City)",
-      "Flat Number"
-    ];
-
-    const rows = currentUsers.map(user => {
-      const soc = user.societyId ? societies[user.societyId] : null;
+    setIsBroadcasting(true);
+    try {
+      await addDoc(collection(db, "system_broadcasts"), {
+        title: broadcastTitle,
+        message: broadcastMessage,
+        timestamp: serverTimestamp(),
+        sender: auth.currentUser.uid
+      });
       
-      return [
-        user.id,
-        `"${(user.name || 'Anonymous').replace(/"/g, '""')}"`,
-        user.role || 'resident',
-        user.xp || 0,
-        user.totalWasteKg || 0,
-        user.streak || 0,
-        user.societyId || 'UNASSIGNED',
-        `"${(soc ? soc.name : 'N/A').replace(/"/g, '""')}"`,
-        `"${(soc ? soc.city : 'N/A').replace(/"/g, '""')}"`,
-        `"${(user.flatNumber || 'N/A').replace(/"/g, '""')}"`
-      ].join(',');
-    });
-
-    const csvContent = [headers.join(','), ...rows].join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    
-    const link = document.createElement("a");
-    link.href = url;
-    
-    const dateStr = new Date().toISOString().split('T')[0];
-    let fileNameExt = 'ALL_USERS';
-    if (filterMode === 'UNASSIGNED') fileNameExt = 'UNASSIGNED_RESIDENTS';
-    if (filterMode === 'SOCIETY' && societies[filterParam]) fileNameExt = `SOCIETY_${societies[filterParam].name.replace(/\s+/g, '_').toUpperCase()}`;
-    if (filterMode === 'LOCALITY') fileNameExt = `LOCALITY_${filterParam}`;
-
-    link.download = `CompostMate_Export_${fileNameExt}_${dateStr}.csv`;
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-    setIsModalOpen(false);
+      showToast("Broadcast Payload Dispatched! 🚀");
+      setBroadcastTitle("");
+      setBroadcastMessage("");
+    } catch (err) {
+      showToast("Broadcast Failure: Protocol Interrupted.", "error");
+    } finally {
+      setIsBroadcasting(false);
+    }
   };
 
-  // --- Mutators Engine ---
+  // --- Filtering & Search ---
+  const filteredUsers = users.filter(user => {
+    const searchStr = `${user.name} ${user.email} ${user.role} ${user.societyId}`.toLowerCase();
+    const matchesSearch = searchStr.includes(searchQuery.toLowerCase());
+    
+    if (filterMode === 'ALL') return matchesSearch;
+    if (filterMode === 'UNASSIGNED') return !user.societyId && matchesSearch;
+    if (filterMode === 'RESIDENT') return (user.role === 'resident' || !user.role) && matchesSearch;
+    if (filterMode === 'SOCIETY') return user.societyId === filterParam && matchesSearch;
+    if (filterMode === 'LOCALITY') {
+      if (!user.societyId) return false; 
+      const soc = societies[user.societyId];
+      return soc && soc.city && soc.city.toUpperCase() === filterParam && matchesSearch;
+    }
+    return matchesSearch;
+  }).sort((a, b) => {
+    if (sortConfig === 'NAME_ASC') return (a.name || '').localeCompare(b.name || '');
+    if (sortConfig === 'WASTE_DESC') return (b.totalWasteKg || 0) - (a.totalWasteKg || 0);
+    if (sortConfig === 'ROLE') return (a.role || 'resident').localeCompare(b.role || 'resident');
+    return 0;
+  });
+
+  const downloadCSV = () => {
+    const headers = ['Name', 'Email', 'Role', 'Waste(KG)', 'UID', 'SocietyID'];
+    const rows = filteredUsers.map(u => [
+      u.name || 'N/A',
+      u.email || 'N/A',
+      u.role || 'resident',
+      u.totalWasteKg || 0,
+      u.id,
+      u.societyId || 'None'
+    ]);
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(r => r.join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `compostmate_registry_${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+    showToast("Matrix Downloaded Successfully");
+  };
+
   const handleRoleChange = async (userId, targetRole) => {
     if (userId === auth.currentUser.uid) {
-        alert("Action Denied: You cannot manually mutate your own God-Mode session.");
+        showAlert({ title: "Denied", message: "Action Denied: You cannot mutate your own God-Mode session." });
         return;
     }
-    if (window.confirm(`Are you sure you want to transition this user to ${targetRole.toUpperCase()}?`)) {
+    const confirmed = await showConfirm({
+      title: "Update Privilege",
+      message: `Are you sure you want to transition this user to ${targetRole.toUpperCase()}?`,
+      confirmLabel: "UPDATE"
+    });
+    if (confirmed) {
       try {
         await updateDoc(doc(db, "users", userId), { role: targetRole });
         setUsers(prev => prev.map(u => u.id === userId ? { ...u, role: targetRole } : u));
+        showToast("User role updated successfully");
       } catch(err) {
-        alert("Failed to update user privilege scope.");
+        showToast("Failed to update user privilege scope.", "error");
       }
     }
   };
 
   const handleWipeData = async (userId) => {
-    if(window.confirm("WARNING: Do you want to completely erase this user's logging history (XP, Waste, Streak = 0)?")) {
+    const confirmed = await showConfirm({
+      title: "Data Wipe Protocol",
+      message: "WARNING: Erase this user's logging history (XP, Waste, Streak = 0)?",
+      confirmLabel: "WIPE DATA",
+      type: "danger"
+    });
+    if (confirmed) {
       try {
         await updateDoc(doc(db, "users", userId), { totalWasteKg: 0, xp: 0, streak: 0 });
         setUsers(prev => prev.map(u => u.id === userId ? { ...u, totalWasteKg: 0, xp: 0, streak: 0 } : u));
+        showToast("User history erased");
       } catch(err) {
-        alert("Failed to execute data wipe protocol.");
+        showToast("Failed to execute data wipe protocol.", "error");
       }
     }
   };
 
   const handleDeleteUser = async (userId) => {
     if (userId === auth.currentUser.uid) {
-        alert("Action Denied: You cannot delete your own session.");
+        showAlert({ title: "Denied", message: "Action Denied: You cannot delete your own session." });
         return;
     }
-    if(window.confirm("CRITICAL: Are you sure you want to permanently delete this user document from the global Firestore matrix?")) {
+    const confirmed = await showConfirm({
+      title: "Terminal Deletion",
+      message: "CRITICAL: Permanently delete this user from the registry?",
+      confirmLabel: "DELETE USER",
+      type: "danger"
+    });
+    if (confirmed) {
       try {
         await deleteDoc(doc(db, "users", userId));
         setUsers(prev => prev.filter(u => u.id !== userId));
+        showToast("User document terminated");
       } catch(err) {
-        alert("Deletion payload failed.");
+        showToast("Deletion payload failed.", "error");
       }
     }
   };
 
   // --- Analytical Calculations ---
   const totalWaste = users.reduce((sum, u) => sum + (u.totalWasteKg || 0), 0);
-  const activeSocietiesCount = Object.keys(societies).length;
-
+  const carbonOffset = (totalWaste * 0.5).toFixed(1); // 0.5kg CO2 per kg waste offset (approx)
+  
   const societyWasteMap = {};
   users.forEach(u => {
       if (u.societyId && u.totalWasteKg) {
@@ -214,353 +240,307 @@ const SuperAdmin = () => {
       }));
   const maxSocietyWaste = topSocieties.length > 0 ? topSocieties[0].waste : 1;
 
-  // Pie Chart Demographics
-  const totalUsers = users.length || 1;
-  const residentsCount = users.filter(u => u.role !== 'society_admin' && u.role !== 'super_admin' && u.role !== 'banned' && u.societyId).length;
-  const sysAdminsCount = users.filter(u => u.role === 'society_admin').length;
-  const superCount = users.filter(u => u.role === 'super_admin').length;
-  const unassignedCount = users.filter(u => !u.societyId && u.role !== 'banned').length;
-  const bannedCount = users.filter(u => u.role === 'banned').length;
-
-  const residentPct = (residentsCount / totalUsers) * 100;
-  const sysAdminPct = (sysAdminsCount / totalUsers) * 100;
-  const superPct = (superCount / totalUsers) * 100;
-  const bannedPct = (bannedCount / totalUsers) * 100;
-
-  // Conic stops mapping
-  const p1 = residentPct;
-  const p2 = p1 + sysAdminPct;
-  const p3 = p2 + superPct;
-  const p4 = p3 + bannedPct;
-
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#0a0a0a' }}>
-        <div className="font-bold animate-pulse text-xl tracking-widest uppercase text-[#14b8a6]">Connecting to Global Matrix...</div>
+        <div className="font-bold animate-pulse text-xl tracking-widest uppercase text-[#14b8a6]">Connecting to Command Center...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex relative" style={{ backgroundColor: '#0a0a0a' }}>
+    <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#0a0a0a' }}>
       <TopNav />
-
-      {/* CSV EXPORT MODAL OVERLAY */}
-      {isModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(4px)' }}>
-              <div className="w-full max-w-lg rounded-2xl p-10 border shadow-2xl relative animate-in fade-in zoom-in-95 duration-300" style={{ backgroundColor: '#0f0f0f', borderColor: 'rgba(255,255,255,0.1)' }}>
-                  <button 
-                      onClick={() => setIsModalOpen(false)}
-                      className="absolute top-6 right-6 text-2xl opacity-50 hover:opacity-100 transition-opacity cursor-pointer"
-                  >×</button>
-                  <h3 className="text-xl font-bold text-white uppercase tracking-widest mb-2 flex items-center gap-3">
-                      <span className="text-[#14b8a6]">⬇️</span> Export Matrix Data
-                  </h3>
-                  <p className="text-[10px] uppercase tracking-widest text-gray-500 mb-8 pb-6 border-b border-white/5">Generate offline CSV spreadsheets</p>
-
-                  <div className="space-y-6 mb-10">
-                       <div>
-                           <label className="block text-[9px] font-bold text-gray-500 uppercase tracking-widest mb-2">Target Segment</label>
-                           <select 
-                               value={filterMode} 
-                               onChange={(e) => {
-                                   setFilterMode(e.target.value);
-                                   setFilterParam('');
-                               }}
-                               className="w-full bg-black/40 text-sm text-white font-bold p-4 rounded-xl border outline-none"
-                               style={{ borderColor: 'rgba(255,255,255,0.1)' }}
-                           >
-                               <option value="ALL">Entire Global Registry</option>
-                               <option value="UNASSIGNED">Unassigned Residents</option>
-                               <option value="SOCIETY">Specific Society</option>
-                               <option value="LOCALITY">Locality / City</option>
-                           </select>
-                       </div>
-
-                       {filterMode === 'SOCIETY' && (
-                           <div className="animate-in slide-in-from-top-2 duration-300">
-                               <label className="block text-[9px] font-bold text-gray-500 uppercase tracking-widest mb-2">Select Cluster</label>
-                               <select 
-                                   value={filterParam} 
-                                   onChange={(e) => setFilterParam(e.target.value)}
-                                   className="w-full bg-black/40 text-sm text-[#14b8a6] p-4 rounded-xl border outline-none font-bold"
-                                   style={{ borderColor: 'rgba(255,255,255,0.1)' }}
-                               >
-                                   <option value="" disabled>Choose a Society...</option>
-                                   {Object.values(societies).map(soc => (
-                                       <option key={soc.id} value={soc.id}>{soc.name} ({soc.city})</option>
-                                   ))}
-                               </select>
-                           </div>
-                       )}
-
-                       {filterMode === 'LOCALITY' && (
-                           <div className="animate-in slide-in-from-top-2 duration-300">
-                               <label className="block text-[9px] font-bold text-gray-500 uppercase tracking-widest mb-2">Select Region</label>
-                               <select 
-                                   value={filterParam} 
-                                   onChange={(e) => setFilterParam(e.target.value)}
-                                   className="w-full bg-black/40 text-sm text-[#14b8a6] p-4 rounded-xl border outline-none font-bold"
-                                   style={{ borderColor: 'rgba(255,255,255,0.1)' }}
-                               >
-                                   <option value="" disabled>Choose a Locality...</option>
-                                   {localities.map(city => (
-                                       <option key={city} value={city}>{city}</option>
-                                   ))}
-                               </select>
-                           </div>
-                       )}
-                  </div>
-
-                  <button 
-                      onClick={handleDownloadCSV}
-                      disabled={
-                          currentUsers.length === 0 || 
-                          (filterMode === 'SOCIETY' && !filterParam) || 
-                          (filterMode === 'LOCALITY' && !filterParam)
-                      }
-                      className="w-full py-5 rounded-xl font-bold text-[11px] uppercase tracking-widest transition-all cursor-pointer disabled:opacity-30 disabled:scale-100 hover:scale-[1.02]"
-                      style={{ background: 'linear-gradient(to right, #14b8a6, #0d9488)', color: 'white', boxShadow: '0 8px 32px rgba(20,184,166,0.3)' }}
-                  >
-                      Generate & Download .CSV
-                  </button>
-                  <p className="text-[10px] font-bold text-center text-gray-500 mt-4 uppercase tracking-widest">
-                      {currentUsers.length} Records matched
-                  </p>
-              </div>
-          </div>
-      )}
-
-
-      <div className="flex-1 pt-24 md:pt-28 p-10">
+      
+      <div className="pt-24 px-6 lg:px-12 pb-10 flex-1 flex flex-col max-w-[1600px] mx-auto w-full">
         
-        {/* Header */}
-        <div className="rounded-3xl p-10 mb-10 text-white relative overflow-hidden flex flex-col md:flex-row justify-between items-start md:items-end gap-6" style={{ background: 'linear-gradient(135deg, rgba(20,184,166,0.15) 0%, rgba(13,148,136,0.08) 100%)', border: '1px solid rgba(20,184,166,0.2)' }}>
-          <div className="absolute top-0 right-0 p-12 opacity-10 rotate-12 pointer-events-none">
-            <span className="text-9xl">🌍</span>
+        {/* TOP COMMAND HEADER */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10">
+          <div>
+            <h1 className="text-4xl font-bold text-white tracking-tight uppercase mb-2">Global Command</h1>
+            <div className="flex items-center gap-3">
+              <span className="w-2 h-2 rounded-full bg-teal-500 animate-pulse"></span>
+              <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-[#6b7280]">System Status: Operational</p>
+            </div>
           </div>
-          <div className="relative z-10 w-full flex flex-col xl:flex-row justify-between xl:items-end gap-8">
-             <div>
-                <p className="text-[10px] font-bold uppercase tracking-[0.3em]" style={{ color: '#14b8a6' }}>System Command Privilege</p>
-                <h1 className="text-5xl font-bold tracking-tight mt-2 mb-2">Global Operations</h1>
-                <p className="max-w-xl text-sm font-semibold opacity-70 leading-relaxed uppercase tracking-widest mt-6">Overseeing planet-wide metrics and localized deployment clusters.</p>
-             </div>
-             <div className="flex flex-wrap gap-4 relative z-10">
-                 <div className="px-6 py-4 rounded-xl border bg-black/20 backdrop-blur-sm" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
-                     <p className="text-[9px] font-bold uppercase text-gray-400 mb-1">Total Network Waste</p>
-                     <p className="text-2xl font-bold text-white">{totalWaste.toFixed(1)} KG</p>
-                 </div>
-                 <div className="px-6 py-4 rounded-xl border bg-black/20 backdrop-blur-sm" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
-                     <p className="text-[9px] font-bold uppercase text-gray-400 mb-1">Active Clusters</p>
-                     <p className="text-2xl font-bold text-white">{activeSocietiesCount}</p>
-                 </div>
-                 <button 
-                     onClick={() => setIsModalOpen(true)}
-                     className="px-8 py-4 rounded-xl border font-bold text-xs uppercase tracking-widest cursor-pointer transition-all hover:bg-white/10"
-                     style={{ borderColor: 'rgba(20,184,166,0.4)', backgroundColor: 'rgba(20,184,166,0.1)' }}
-                 >
-                     Export Data ⬇️
-                 </button>
-             </div>
+
+          <div className="flex bg-[#111] p-1 rounded-2xl border border-white/5">
+            {[
+              { id: 'DASHBOARD', label: 'Intelligence', icon: '📊' },
+              { id: 'USERS', label: 'Registry', icon: '👥' },
+              { id: 'BROADCAST', label: 'Operations', icon: '🛰️' }
+            ].map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`px-6 py-3 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${
+                  activeTab === tab.id ? 'bg-[#14b8a6] text-white shadow-lg' : 'text-gray-500 hover:text-white'
+                }`}
+              >
+                <span className="mr-2">{tab.icon}</span> {tab.label}
+              </button>
+            ))}
           </div>
         </div>
 
-        {/* Analytics Top Row */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
-            {/* Roles Distribution Pie Chart */}
-            <div className="p-8 rounded-2xl border flex items-center justify-between" style={{ backgroundColor: 'rgba(255,255,255,0.02)', borderColor: 'rgba(255,255,255,0.06)' }}>
-                <div className="flex-1">
-                    <h3 className="text-xs font-bold text-white uppercase tracking-widest mb-4">Demographics Map</h3>
-                    <div className="space-y-3">
-                        <div className="flex items-center gap-3">
-                            <span className="w-2.5 h-2.5 rounded-full bg-[#14b8a6]"></span>
-                            <span className="text-[9px] font-bold uppercase text-gray-400">Assigned Residents</span>
-                            <span className="text-xs font-bold text-white ml-auto">{residentPct.toFixed(1)}%</span>
-                        </div>
-                        <div className="flex items-center gap-3">
-                            <span className="w-2.5 h-2.5 rounded-full bg-[#f59e0b]"></span>
-                            <span className="text-[9px] font-bold uppercase text-gray-400">Society Admins</span>
-                            <span className="text-xs font-bold text-white ml-auto">{sysAdminPct.toFixed(1)}%</span>
-                        </div>
-                        <div className="flex items-center gap-3">
-                            <span className="w-2.5 h-2.5 rounded-full bg-[#3b82f6]"></span>
-                            <span className="text-[9px] font-bold uppercase text-gray-400">Super Admins</span>
-                            <span className="text-xs font-bold text-white ml-auto">{superPct.toFixed(1)}%</span>
-                        </div>
-                        <div className="flex items-center gap-3">
-                            <span className="w-2.5 h-2.5 rounded-full bg-red-500"></span>
-                            <span className="text-[9px] font-bold uppercase text-gray-400">Banned/Suspended</span>
-                            <span className="text-xs font-bold text-white ml-auto">{bannedPct.toFixed(1)}%</span>
-                        </div>
-                        <div className="flex items-center gap-3">
-                            <span className="w-2.5 h-2.5 rounded-full bg-gray-600"></span>
-                            <span className="text-[9px] font-bold uppercase text-gray-400">Unassigned</span>
-                        </div>
-                    </div>
+        {/* DASHBOARD TAB */}
+        {activeTab === 'DASHBOARD' && (
+          <div className="space-y-8 animate-in fade-in duration-500">
+            {/* Quick Metrics */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              {[
+                { label: "Network Waste", value: `${totalWaste.toFixed(1)} KG`, sub: "Total Diverted", icon: "🌍", color: "#14b8a6" },
+                { label: "Carbon Offset", value: `${carbonOffset} KG`, sub: "CO2 Equivalent", icon: "🌱", color: "#22c55e" },
+                { label: "Global Users", value: users.length, sub: "Active Nodes", icon: "👥", color: "#3b82f6" },
+                { label: "Active Clusters", value: Object.keys(societies).length, sub: "Registered Societies", icon: "🏢", color: "#f59e0b" }
+              ].map((m, i) => (
+                <div key={i} className="p-8 rounded-3xl border border-white/5 bg-[#111] relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity">
+                    <span className="text-6xl">{m.icon}</span>
+                  </div>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">{m.label}</p>
+                  <p className="text-4xl font-bold text-white tracking-tighter mb-1">{m.value}</p>
+                  <p className="text-[9px] font-bold uppercase tracking-widest" style={{ color: m.color }}>{m.sub}</p>
                 </div>
-                <div className="relative w-40 h-40 shrink-0 ml-10">
-                    <div className="w-full h-full rounded-full shadow-2xl relative" style={{
-                        background: `conic-gradient(
-                            #14b8a6 0% ${p1}%, 
-                            #f59e0b ${p1}% ${p2}%, 
-                            #3b82f6 ${p2}% ${p3}%,
-                            #ef4444 ${p3}% ${p4}%,
-                            #4b5563 ${p4}% 100%
-                        )`
-                    }}></div>
-                    <div className="absolute inset-[25%] bg-[#0a0a0a] rounded-full flex items-center justify-center flex-col">
-                        <span className="text-xs font-bold text-white">{totalUsers}</span>
-                        <span className="text-[8px] font-bold text-gray-500 uppercase tracking-widest mt-1">Users</span>
-                    </div>
-                </div>
+              ))}
             </div>
 
-            {/* Top Societies Output Bar Chart */}
-            <div className="p-8 rounded-2xl border" style={{ backgroundColor: 'rgba(255,255,255,0.02)', borderColor: 'rgba(255,255,255,0.06)' }}>
-                 <h3 className="text-xs font-bold text-white uppercase tracking-widest mb-6">Top Generating Clusters</h3>
-                 {topSocieties.length === 0 ? (
-                      <p className="text-xs font-bold uppercase text-gray-600 tracking-widest">No society data compiled.</p>
-                 ) : (
-                     <div className="space-y-4">
-                         {topSocieties.map((soc, idx) => (
-                             <div key={idx} className="relative">
-                                 <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest text-white mb-2 relative z-10">
-                                     <span className="truncate max-w-[200px]">{soc.name}</span>
-                                     <span className="text-[#14b8a6]">{soc.waste.toFixed(1)} KG</span>
-                                 </div>
-                                 <div className="h-2 w-full rounded-full overflow-hidden bg-white/5 relative">
-                                     <div 
-                                         className="h-full rounded-full transition-all duration-1000 bg-[#14b8a6]"
-                                         style={{ width: `${(soc.waste / maxSocietyWaste) * 100}%` }}
-                                     ></div>
-                                 </div>
-                             </div>
-                         ))}
-                     </div>
-                 )}
-            </div>
-        </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Regional Leaders */}
+              <div className="p-10 rounded-3xl border border-white/5 bg-[#111]">
+                <h3 className="text-xs font-bold uppercase tracking-widest text-white mb-8">Regional Impact Clusters</h3>
+                <div className="space-y-6">
+                  {topSocieties.map((soc, idx) => (
+                    <div key={idx} className="space-y-2">
+                      <div className="flex justify-between items-end">
+                        <span className="text-sm font-bold text-gray-300">{soc.name}</span>
+                        <span className="text-xs font-bold text-[#14b8a6]">{soc.waste.toFixed(1)} KG</span>
+                      </div>
+                      <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-gradient-to-r from-[#14b8a6] to-[#0d9488] rounded-full transition-all duration-1000" 
+                          style={{ width: `${(soc.waste / maxSocietyWaste) * 100}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
 
-        {/* Global Registry Grid */}
-        <div className="p-8 rounded-2xl border flex-1 block" style={{ backgroundColor: 'rgba(255,255,255,0.02)', borderColor: 'rgba(255,255,255,0.06)' }}>
-            <div className="flex justify-between items-end mb-6 border-b pb-4" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
-                <h3 className="text-xs font-bold text-white uppercase tracking-widest">Live Registry & Operations</h3>
-                <span className="text-[10px] font-bold uppercase text-gray-500 bg-white/5 px-3 py-1 rounded-lg">Showing {Math.min(100, users.length)} / {users.length} Users</span>
+              {/* Network Demographics */}
+              <div className="p-10 rounded-3xl border border-white/5 bg-[#111] flex flex-col justify-center">
+                <h3 className="text-xs font-bold uppercase tracking-widest text-white mb-8 text-center">Identity Spectrum</h3>
+                <div className="flex flex-wrap justify-center gap-10">
+                  <div className="relative w-40 h-40">
+                    <div className="w-full h-full rounded-full border-8 border-teal-500/10 flex items-center justify-center flex-col">
+                      <span className="text-4xl font-bold text-white tracking-tighter">{users.length}</span>
+                      <span className="text-[8px] font-bold uppercase tracking-widest text-gray-500 mt-1">Total Nodes</span>
+                    </div>
+                  </div>
+                  <div className="space-y-4">
+                    {[
+                      { label: "Residents", count: users.filter(u => u.role === 'resident' || !u.role).length, color: "#14b8a6" },
+                      { label: "Secretaries", count: users.filter(u => u.role === 'society_admin').length, color: "#f59e0b" },
+                      { label: "Admins", count: users.filter(u => u.role === 'super_admin').length, color: "#3b82f6" },
+                      { label: "Suspended", count: users.filter(u => u.role === 'banned').length, color: "#ef4444" }
+                    ].map((d, i) => (
+                      <div key={i} className="flex items-center gap-4">
+                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: d.color }}></div>
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 w-24">{d.label}</span>
+                        <span className="text-xs font-bold text-white">{d.count}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* USERS REGISTRY TAB */}
+        {activeTab === 'USERS' && (
+          <div className="flex-1 flex flex-col animate-in slide-in-from-bottom-4 duration-500">
+            <div className="flex flex-col md:flex-row gap-4 mb-8">
+              <div className="flex-1 relative group">
+                <span className="absolute left-6 top-1/2 -translate-y-1/2 opacity-30 group-focus-within:opacity-100 transition-opacity">🔍</span>
+                <input
+                  type="text"
+                  placeholder="Search by name, email, or role..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full bg-[#111] border border-white/5 text-white py-5 pl-16 pr-8 rounded-2xl outline-none focus:border-[#14b8a6]/50 transition-all font-semibold"
+                />
+              </div>
+              
+              <div className="flex flex-wrap gap-3">
+                {/* Mode Filter */}
+                <select 
+                  value={filterMode}
+                  onChange={(e) => { setFilterMode(e.target.value); setFilterParam(''); }}
+                  className="bg-[#111] border border-white/5 text-white px-5 py-4 rounded-xl outline-none font-bold text-[9px] uppercase tracking-widest cursor-pointer hover:border-teal-500/30 transition-all"
+                >
+                  <option value="ALL">All Users</option>
+                  <option value="UNASSIGNED">Solo Users (Unassigned)</option>
+                  <option value="RESIDENT">Residents Only</option>
+                  <option value="LOCALITY">Locality Wise</option>
+                  <option value="SOCIETY">By Society</option>
+                </select>
+
+                {/* Sub-Filter Parameter (Localities or Societies) */}
+                {(filterMode === 'LOCALITY' || filterMode === 'SOCIETY') && (
+                  <select 
+                    value={filterParam}
+                    onChange={(e) => setFilterParam(e.target.value)}
+                    className="bg-[#111] border border-teal-500/20 text-teal-400 px-5 py-4 rounded-xl outline-none font-bold text-[9px] uppercase tracking-widest cursor-pointer animate-in fade-in slide-in-from-left-2"
+                  >
+                    <option value="">Select {filterMode === 'LOCALITY' ? 'City' : 'Society'}...</option>
+                    {filterMode === 'LOCALITY' ? 
+                      localities.map(loc => <option key={loc} value={loc}>{loc}</option>) :
+                      Object.values(societies).map(soc => <option key={soc.id} value={soc.id}>{soc.name}</option>)
+                    }
+                  </select>
+                )}
+
+                {/* Sorting */}
+                <select 
+                  value={sortConfig}
+                  onChange={(e) => setSortConfig(e.target.value)}
+                  className="bg-[#111] border border-white/5 text-white px-5 py-4 rounded-xl outline-none font-bold text-[9px] uppercase tracking-widest cursor-pointer hover:border-teal-500/30 transition-all"
+                >
+                  <option value="WASTE_DESC">Top Waste</option>
+                  <option value="NAME_ASC">Name (A-Z)</option>
+                  <option value="ROLE">Role</option>
+                </select>
+
+                <button 
+                  onClick={downloadCSV}
+                  className="px-6 py-4 bg-[#14b8a6] rounded-xl text-[9px] font-bold uppercase tracking-widest text-white hover:brightness-110 shadow-lg shadow-teal-900/20 transition-all flex items-center gap-2"
+                >
+                  <span>Export</span> ⬇️
+                </button>
+              </div>
+            </div>
+
+            <div className="bg-[#111] border border-white/5 rounded-3xl overflow-hidden flex-1">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left">
+                  <thead className="bg-white/5">
+                    <tr>
+                      <th className="px-8 py-6 text-[9px] font-bold uppercase tracking-[0.2em] text-gray-500">Node Identity</th>
+                      <th className="px-8 py-6 text-[9px] font-bold uppercase tracking-[0.2em] text-gray-500">Contact Email</th>
+                      <th className="px-8 py-6 text-[9px] font-bold uppercase tracking-[0.2em] text-gray-500">Status</th>
+                      <th className="px-8 py-6 text-[9px] font-bold uppercase tracking-[0.2em] text-gray-500">Waste Log</th>
+                      <th className="px-8 py-6 text-[9px] font-bold uppercase tracking-[0.2em] text-gray-500">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5">
+                    {filteredUsers.slice(0, 50).map(user => {
+                      const isSelf = user.id === auth.currentUser?.uid;
+                      return (
+                        <tr key={user.id} className="hover:bg-white/[0.02] transition-colors group">
+                          <td className="px-8 py-6">
+                            <div className="font-bold text-white mb-1">{user.name || 'Anonymous Node'}</div>
+                            <div className="text-[10px] font-bold uppercase tracking-widest text-gray-500">UID: {user.id.slice(0,8)}...</div>
+                          </td>
+                          <td className="px-8 py-6 text-sm font-semibold text-gray-400">{user.email}</td>
+                          <td className="px-8 py-6">
+                            <span className={`text-[9px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-lg ${
+                              user.role === 'super_admin' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' :
+                              user.role === 'society_admin' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' :
+                              user.role === 'banned' ? 'bg-red-500/10 text-red-400 border border-red-500/20' :
+                              'bg-teal-500/10 text-teal-400 border border-teal-500/20'
+                            }`}>
+                              {user.role || 'Resident'}
+                            </span>
+                          </td>
+                          <td className="px-8 py-6">
+                            <div className="font-bold text-white text-lg">{user.totalWasteKg?.toFixed(1) || 0}</div>
+                            <div className="text-[9px] font-bold uppercase tracking-widest text-gray-600">KG Diverted</div>
+                          </td>
+                          <td className="px-8 py-6">
+                            {isSelf ? (
+                              <span className="text-[9px] font-bold uppercase tracking-widest text-gray-500 italic">Self Privilege Active</span>
+                            ) : (
+                              <div className="flex gap-2 opacity-20 group-hover:opacity-100 transition-opacity">
+                                <button onClick={() => handleRoleChange(user.id, 'super_admin')} className="p-2 hover:bg-blue-500/10 rounded-lg text-blue-500 text-xs" title="Make SuperAdmin">🛰️</button>
+                                <button onClick={() => handleRoleChange(user.id, 'society_admin')} className="p-2 hover:bg-amber-500/10 rounded-lg text-amber-500 text-xs" title="Make Secretary">🏢</button>
+                                <button onClick={() => handleRoleChange(user.id, 'banned')} className="p-2 hover:bg-red-500/10 rounded-lg text-red-500 text-xs" title="Suspend">🚫</button>
+                                <button onClick={() => handleWipeData(user.id)} className="p-2 hover:bg-gray-500/10 rounded-lg text-gray-400 text-xs" title="Wipe Stats">🧼</button>
+                                <button onClick={() => handleDeleteUser(user.id)} className="p-2 hover:bg-red-500/10 rounded-lg text-red-600 text-xs" title="Delete">🗑️</button>
+                              </div>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* BROADCAST TAB */}
+        {activeTab === 'BROADCAST' && (
+          <div className="max-w-3xl mx-auto w-full animate-in zoom-in-95 duration-500">
+            <div className="bg-[#111] border border-white/5 rounded-3xl p-10">
+              <h2 className="text-xl font-bold text-white tracking-tight uppercase mb-8 flex items-center gap-4">
+                <span className="text-2xl">🛰️</span> System Broadcast Protocol
+              </h2>
+              <p className="text-xs font-semibold text-gray-500 leading-relaxed mb-10 uppercase tracking-widest">
+                Sending a broadcast will trigger a push notification and in-app alert to every user globally. Use for critical updates or maintenance alerts only.
+              </p>
+
+              <div className="space-y-6">
+                <div>
+                  <label className="block text-[9px] font-bold uppercase tracking-[0.2em] text-gray-500 mb-3">Broadcast Heading</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. SYSTEM MAINTENANCE"
+                    value={broadcastTitle}
+                    onChange={(e) => setBroadcastTitle(e.target.value)}
+                    className="w-full bg-white/5 border border-white/10 text-white p-5 rounded-2xl outline-none focus:border-teal-500/50 font-bold"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[9px] font-bold uppercase tracking-[0.2em] text-gray-500 mb-3">Announcement Content</label>
+                  <textarea
+                    rows="4"
+                    placeholder="Detail the update or system message here..."
+                    value={broadcastMessage}
+                    onChange={(e) => setBroadcastMessage(e.target.value)}
+                    className="w-full bg-white/5 border border-white/10 text-white p-6 rounded-2xl outline-none focus:border-teal-500/50 font-medium resize-none"
+                  ></textarea>
+                </div>
+                
+                <button
+                  onClick={handleBroadcast}
+                  disabled={isBroadcasting || !broadcastTitle || !broadcastMessage}
+                  className="w-full py-6 rounded-2xl font-bold text-[11px] uppercase tracking-[0.3em] transition-all disabled:opacity-30 disabled:scale-100 hover:scale-[1.02] mt-4"
+                  style={{ background: 'linear-gradient(to right, #14b8a6, #0d9488)', color: 'white', boxShadow: '0 8px 32px rgba(20,184,166,0.3)' }}
+                >
+                  {isBroadcasting ? "DISPATCHING PROTOCOL..." : "INITIATE GLOBAL BROADCAST"}
+                </button>
+              </div>
             </div>
             
-            <div className="overflow-x-auto w-full">
-                <table className="w-full text-left border-collapse whitespace-nowrap">
-                    <thead>
-                        <tr>
-                            <th className="pb-4 text-[9px] font-bold text-gray-500 uppercase tracking-widest pr-6" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>User / Identity</th>
-                            <th className="pb-4 text-[9px] font-bold text-gray-500 uppercase tracking-widest pr-6" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>Impact</th>
-                            <th className="pb-4 text-[9px] font-bold text-gray-500 uppercase tracking-widest pr-6" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>Status</th>
-                            <th className="pb-4 text-[9px] font-bold text-gray-500 uppercase tracking-widest pr-6" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>Assigned Cluster / City</th>
-                            <th className="pb-4 text-[9px] font-bold text-gray-500 uppercase tracking-widest" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>Remote Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-white/5">
-                        {users.slice(0, 100).map((user) => {
-                            const soc = user.societyId ? societies[user.societyId] : null;
-                            const isSelf = user.id === auth.currentUser?.uid;
-
-                            return (
-                                <tr key={user.id} className="hover:bg-white/5 transition-colors group">
-                                    <td className="py-4 pr-6">
-                                        <div className="font-bold text-sm text-white">{user.name || 'Anonymous Protocol'}</div>
-                                    </td>
-                                    <td className="py-4 pr-6">
-                                        <div className="text-sm font-bold text-[#14b8a6]">{user.totalWasteKg?.toFixed(1) || 0} KG</div>
-                                    </td>
-                                    <td className="py-4 pr-6">
-                                        <span className={`text-[9px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-md ${
-                                            user.role === 'super_admin' ? 'bg-teal-500/10 text-teal-500' :
-                                            user.role === 'society_admin' ? 'bg-amber-500/10 text-amber-500' : 
-                                            user.role === 'banned' ? 'bg-red-500/10 text-red-500' :
-                                            'bg-white/5 text-gray-400'
-                                        }`}>
-                                            {user.role === 'society_admin' ? 'Secretary' : user.role || 'Resident'}
-                                        </span>
-                                    </td>
-                                    <td className="py-4 pr-6">
-                                        {soc ? (
-                                            <div>
-                                                <p className="text-sm font-bold text-white">{soc.name}</p>
-                                                <p className="text-[10px] font-bold uppercase tracking-widest text-[#14b8a6] mt-0.5">{soc.city}</p>
-                                            </div>
-                                        ) : (
-                                            <span className="text-[9px] font-bold uppercase text-red-500/80 tracking-widest bg-red-500/10 px-3 py-1.5 rounded-lg border border-red-500/20">Unassigned Orbit</span>
-                                        )}
-                                    </td>
-
-                                    {/* Remote Operations Column */}
-                                    <td className="py-4">
-                                        {isSelf ? (
-                                            <span className="text-[8px] font-bold uppercase tracking-widest text-gray-600 bg-white/5 px-3 py-1 rounded-full">God-Mode Access Safe</span>
-                                        ) : (
-                                            <div className="flex gap-2 opacity-10 lg:opacity-30 group-hover:opacity-100 transition-opacity">
-                                                {/* Promote / Demote */}
-                                                {user.role !== 'super_admin' ? (
-                                                     <button 
-                                                        onClick={() => handleRoleChange(user.id, 'super_admin')}
-                                                        className="px-3 py-1 bg-[#3b82f6]/10 text-[#3b82f6] border border-[#3b82f6]/20 rounded-md text-[8px] font-bold uppercase tracking-widest hover:bg-[#3b82f6]/20 transition-colors"
-                                                        title="Promote to Global Admin"
-                                                     >Promote</button>
-                                                ) : (
-                                                     <button 
-                                                        onClick={() => handleRoleChange(user.id, 'resident')}
-                                                        className="px-3 py-1 bg-white/5 text-gray-400 border border-white/10 rounded-md text-[8px] font-bold uppercase tracking-widest hover:bg-white/10 transition-colors"
-                                                        title="Revoke Global Privilege"
-                                                     >Demote</button>
-                                                )}
-
-                                                {/* Ban / Restore */}
-                                                {user.role !== 'banned' ? (
-                                                      <button 
-                                                        onClick={() => handleRoleChange(user.id, 'banned')}
-                                                        className="px-3 py-1 bg-amber-500/10 text-amber-500 border border-amber-500/20 rounded-md text-[8px] font-bold uppercase tracking-widest hover:bg-amber-500/20 transition-colors"
-                                                        title="Suspend Account"
-                                                     >Ban</button>
-                                                ) : (
-                                                      <button 
-                                                        onClick={() => handleRoleChange(user.id, 'resident')}
-                                                        className="px-3 py-1 bg-teal-500/10 text-teal-500 border border-teal-500/20 rounded-md text-[8px] font-bold uppercase tracking-widest hover:bg-teal-500/20 transition-colors"
-                                                        title="Restore Account"
-                                                     >Restore</button>
-                                                )}
-
-                                                {/* Wipe Data */}
-                                                <button 
-                                                    onClick={() => handleWipeData(user.id)}
-                                                    className="px-3 py-1 bg-white/5 text-gray-400 border border-white/10 rounded-md text-[8px] font-bold uppercase tracking-widest hover:bg-white/10 transition-colors"
-                                                    title="Reset XP and Waste data to 0"
-                                                >Wipe</button>
-
-                                                {/* Hard Delete */}
-                                                <button 
-                                                    onClick={() => handleDeleteUser(user.id)}
-                                                    className="px-3 py-1 bg-red-500/10 text-red-500 border border-red-500/20 rounded-md text-[8px] font-bold uppercase tracking-widest hover:bg-red-500/20 transition-colors"
-                                                    title="Permanently Delete Document"
-                                                >Delete</button>
-                                            </div>
-                                        )}
-                                    </td>
-                                </tr>
-                            );
-                        })}
-                    </tbody>
-                </table>
-                {currentUsers.length > 100 && (
-                    <div className="text-center pt-8">
-                        <p className="text-[10px] font-bold text-amber-500/80 uppercase tracking-widest bg-amber-500/10 inline-block px-4 py-2 rounded-xl border border-amber-500/20">
-                            Showing top 100 records in UI. Use CSV extract to view all.
-                        </p>
-                    </div>
-                )}
+            {/* Maintenance Shortcuts */}
+            <div className="grid grid-cols-2 gap-6 mt-8">
+              <div className="p-8 rounded-3xl border border-white/5 bg-[#111] hover:border-teal-500/30 transition-all cursor-pointer">
+                <span className="text-2xl mb-4 block">🧹</span>
+                <h4 className="text-[10px] font-bold uppercase tracking-widest text-white mb-1">Clear App Cache</h4>
+                <p className="text-[9px] text-gray-500 font-bold uppercase">Force all clients to refresh</p>
+              </div>
+              <div className="p-8 rounded-3xl border border-white/5 bg-[#111] hover:border-teal-500/30 transition-all cursor-pointer">
+                <span className="text-2xl mb-4 block">🔌</span>
+                <h4 className="text-[10px] font-bold uppercase tracking-widest text-white mb-1">Service Mode</h4>
+                <p className="text-[9px] text-gray-500 font-bold uppercase">Toggle Maintenance Splash</p>
+              </div>
             </div>
-        </div>
-
+          </div>
+        )}
       </div>
+
     </div>
   );
 };

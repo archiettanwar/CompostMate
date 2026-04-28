@@ -121,17 +121,17 @@ const Learn = () => {
   });
 
   return (
-    <div className="min-h-screen flex" style={{ backgroundColor: '#0a0a0a' }}>
+    <div className="min-h-screen flex" style={{ backgroundColor: 'var(--color-bg)' }}>
       <TopNav />
       <div className="flex-1 pt-24 md:pt-28 p-8">
         {!selectedArticle ? (
           <>
             {/* HERO SECTION */}
-            <div className="rounded-3xl p-12 mb-10 text-white relative overflow-hidden" style={{ background: 'linear-gradient(135deg, rgba(34,197,94,0.15) 0%, rgba(22,163,74,0.08) 100%)', border: '1px solid rgba(34,197,94,0.2)' }}>
+            <div className="rounded-3xl p-6 md:p-12 mb-10 text-white relative overflow-hidden" style={{ background: 'linear-gradient(135deg, rgba(34,197,94,0.15) 0%, rgba(22,163,74,0.08) 100%)', border: '1px solid rgba(34,197,94,0.2)' }}>
               <div className="relative z-10 flex flex-col lg:flex-row justify-between items-start gap-12">
                 <div className="max-w-xl">
-                  <h1 className="text-5xl font-bold tracking-tight mb-4 animate-in slide-in-from-left duration-700 leading-[1.1]">Knowledge Hub 🌱</h1>
-                  <p className="text-lg font-medium opacity-80" style={{ color: '#9ca3af' }}>Master the art of composting with curated guides, real-world videos, and AI assistance.</p>
+                  <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-4 animate-in slide-in-from-left duration-700 leading-[1.1]">Knowledge Hub 🌱</h1>
+                  <p className="text-base md:text-lg font-medium opacity-80" style={{ color: '#9ca3af' }}>Master the art of composting with curated guides, videos, and AI.</p>
                 </div>
 
                 <div className="flex-1 w-full max-w-xl">
@@ -151,7 +151,7 @@ const Learn = () => {
                   <div className="flex flex-wrap gap-2">
                     <button
                       onClick={() => { setSelectedLevel("All"); setSelectedTopic("All"); }}
-                      className={`px-5 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all ${
+                      className={`px-5 py-2.5 rounded-lg text-[11px] font-bold uppercase tracking-widest transition-all ${
                         selectedLevel === "All" && selectedTopic === "All" ? 'text-white' : 'text-gray-400 hover:text-gray-300'
                       }`}
                       style={(selectedLevel === "All" && selectedTopic === "All") ? { background: 'linear-gradient(to bottom, #22c55e, #16a34a)', boxShadow: '0 8px 32px rgba(34,197,94,0.3)' } : { backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}
@@ -162,7 +162,7 @@ const Learn = () => {
                       <button
                         key={lvl}
                         onClick={() => setSelectedLevel(lvl)}
-                        className={`px-5 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all ${
+                        className={`px-5 py-2.5 rounded-lg text-[11px] font-bold uppercase tracking-widest transition-all ${
                           selectedLevel === lvl ? 'text-white' : 'text-gray-400 hover:text-gray-300'
                         }`}
                         style={selectedLevel === lvl ? { background: 'linear-gradient(to bottom, #22c55e, #16a34a)' } : { backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}
@@ -174,7 +174,7 @@ const Learn = () => {
                       <button
                         key={tpc}
                         onClick={() => setSelectedTopic(tpc)}
-                        className={`px-5 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all ${
+                        className={`px-5 py-2.5 rounded-lg text-[11px] font-bold uppercase tracking-widest transition-all ${
                           selectedTopic === tpc ? 'text-white' : 'text-gray-400 hover:text-gray-300'
                         }`}
                         style={selectedTopic === tpc ? { background: 'linear-gradient(to bottom, #22c55e, #16a34a)' } : { backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}
@@ -189,26 +189,26 @@ const Learn = () => {
             </div>
 
             {/* STATS BAR */}
-            <div className="grid grid-cols-4 gap-6 mb-12">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-12">
               {[
                 { label: "Completion", value: `${Math.round((readArticles.length/articles.length)*100)}%`, sub: `${readArticles.length}/${articles.length} Read`, icon: "🏆" },
-                { label: "Bookmarks", value: savedArticles.length, sub: "Saved guides", icon: "🔖" },
-                { label: "Learning PR", value: learningBadges.filter(b => readArticles.length >= b.threshold).length, sub: "Badges earned", icon: "💎" },
+                { label: "Bookmarks", value: savedArticles.length, sub: "Guides", icon: "🔖" },
+                { label: "Learning PR", value: learningBadges.filter(b => readArticles.length >= b.threshold).length, sub: "Trophies", icon: "💎" },
                 { label: "Streak", value: "3", sub: "Reading days", icon: "🔥" }
               ].map((stat, i) => (
-                <div key={i} className="p-6 rounded-xl transition-all group" style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
-                  <div className="flex items-center justify-between mb-4">
-                    <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: '#6b7280' }}>{stat.label}</span>
-                    <span className="text-xl grayscale group-hover:grayscale-0 transition-all">{stat.icon}</span>
+                <div key={i} className="p-4 md:p-6 rounded-xl transition-all group" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-[11px] font-bold uppercase tracking-widest" style={{ color: '#6b7280' }}>{stat.label}</span>
+                    <span className="text-xl md:text-2xl grayscale group-hover:grayscale-0 transition-all">{stat.icon}</span>
                   </div>
-                  <p className="text-3xl font-bold text-white tracking-tight mb-1">{stat.value}</p>
-                  <p className="text-[9px] font-bold uppercase tracking-widest" style={{ color: '#4b5563' }}>{stat.sub}</p>
+                  <p className="text-2xl md:text-3xl font-bold text-white tracking-tight mb-1">{stat.value}</p>
+                  <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: '#4b5563' }}>{stat.sub}</p>
                 </div>
               ))}
             </div>
 
             {/* ARTICLES GRID */}
-            <div className="grid grid-cols-3 gap-8">
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8">
               {filteredArticles.map((article, i) => (
                 <div 
                   key={article.id}
@@ -258,22 +258,22 @@ const Learn = () => {
             </div>
 
             {/* BADGES SECTION */}
-            <div className="mt-16 p-12 rounded-2xl" style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+            <div className="mt-16 p-12 rounded-2xl" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
               <h2 className="text-xl font-bold text-white tracking-tight mb-8 flex items-center gap-3 uppercase text-xs tracking-widest" style={{ color: '#6b7280' }}>
                 <span className="text-xl">📚</span> Library Trophies
               </h2>
-              <div className="grid grid-cols-4 gap-8">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8">
                 {learningBadges.map((badge) => {
                   const unlocked = readArticles.length >= badge.threshold;
                   return (
-                    <div key={badge.id} className={`p-8 rounded-xl text-center border transition-all ${
+                    <div key={badge.id} className={`p-6 md:p-8 rounded-xl text-center border transition-all ${
                       unlocked ? 'border-[#22c55e]/30' : 'border-white/5 opacity-40'
                     }`}
                     style={{ backgroundColor: unlocked ? 'rgba(34,197,94,0.05)' : 'rgba(255,255,255,0.02)' }}
                     >
-                      <div className={`text-5xl mb-6 inline-block p-4 rounded-xl ${unlocked ? 'grayscale-0' : 'grayscale opacity-30'}`}>{badge.icon}</div>
-                      <p className={`font-bold uppercase tracking-widest text-[9px] mb-2 ${unlocked ? 'text-[#22c55e]' : 'text-gray-500'}`}>{badge.name}</p>
-                      <p className="text-[8px] font-bold text-gray-600 uppercase tracking-widest">{badge.condition}</p>
+                      <div className={`text-4xl md:text-5xl mb-4 md:mb-6 inline-block p-3 md:p-4 rounded-xl ${unlocked ? 'grayscale-0' : 'grayscale opacity-30'}`}>{badge.icon}</div>
+                      <p className={`font-bold uppercase tracking-widest text-[10px] mb-2 ${unlocked ? 'text-[#22c55e]' : 'text-gray-500'}`}>{badge.name}</p>
+                      <p className="text-[9px] font-bold text-gray-600 uppercase tracking-widest">{badge.condition}</p>
                     </div>
                   );
                 })}
@@ -291,7 +291,7 @@ const Learn = () => {
               <span className="group-hover:-translate-x-1 transition-transform">←</span> Back to Hub
             </button>
 
-            <div className="rounded-3xl shadow-2xl overflow-hidden" style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+            <div className="rounded-3xl shadow-2xl overflow-hidden" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
               <div className="h-[400px] relative">
                 <img src={selectedArticle.image} alt={selectedArticle.title} className="w-full h-full object-cover" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>

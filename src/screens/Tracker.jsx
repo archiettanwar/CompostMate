@@ -56,7 +56,7 @@ const Tracker = () => {
   };
 
   const renderBinCard = (batch, isActive) => (
-    <div key={batch.id} className="p-8 rounded-2xl transition-all relative overflow-hidden group flex flex-col h-full" style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+    <div key={batch.id} className="p-8 rounded-2xl transition-all relative overflow-hidden group flex flex-col h-full" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
       {/* Status Indicator */}
       <div className={`absolute top-0 right-0 px-5 py-2 rounded-bl-xl font-bold text-[9px] uppercase tracking-widest ${
         isActive ? 'text-[#f59e0b]' : batch.isMatured ? 'text-[#22c55e]' : 'text-gray-400'
@@ -71,7 +71,7 @@ const Tracker = () => {
         
         <div className="flex-1 pt-2">
           <div className="flex items-center justify-between mb-1">
-            <h3 className="text-xl font-bold text-white tracking-tight">{batch.name}</h3>
+            <h3 className="text-xl font-bold tracking-tight" style={{ color: 'var(--color-text-primary)' }}>{batch.name}</h3>
             <button 
               onClick={() => handleEditName(batch.id, batch.name)}
               className="p-2 hover:bg-white/5 rounded-lg transition-all group/edit"
@@ -110,11 +110,11 @@ const Tracker = () => {
   );
 
   return (
-    <div className="min-h-screen pb-20" style={{ backgroundColor: '#0a0a0a' }}>
+    <div className="min-h-screen pb-20" style={{ backgroundColor: 'var(--color-bg)' }}>
       <TopNav />
       <div className="pt-28 px-6 lg:px-8 pb-10 min-h-screen max-w-7xl mx-auto w-full">
         <div className="mb-12">
-          <h1 className="text-3xl font-bold text-white tracking-tight uppercase">Maturity Tracker</h1>
+          <h1 className="text-3xl font-bold tracking-tight uppercase" style={{ color: 'var(--color-text-primary)' }}>Maturity Tracker</h1>
           <p className="mt-2 text-xs font-semibold uppercase tracking-widest" style={{ color: '#6b7280' }}>Manage your bins and lifecycle</p>
         </div>
 
@@ -140,7 +140,7 @@ const Tracker = () => {
             {/* Active Bins Section */}
             {activeBins.length > 0 && (
               <div>
-                <h2 className="text-sm font-bold text-white uppercase tracking-widest mb-6 flex items-center gap-3">
+                <h2 className="text-sm font-bold uppercase tracking-widest mb-6 flex items-center gap-3" style={{ color: 'var(--color-text-primary)' }}>
                   <span className="w-2 h-2 rounded-full bg-[#f59e0b] animate-pulse"></span>
                   Active Bins (Filling)
                 </h2>

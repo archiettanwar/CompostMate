@@ -21,33 +21,36 @@ import Notifications from "./screens/Notifications";
 import './App.css'
 
 import { NotificationProvider } from "./context/NotificationContext";
+import { ThemeProvider } from "./context/ThemeContext";
 
 function App() {
   return (
     <Router>
-      <NotificationProvider>
-        <Routes>
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/auth" element={<Auth />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/chat" element={<Chat />} />
-        <Route path="/log" element={<Logger />} />
-        <Route path="/leaderboard" element={<Leaderboard />} />
-        <Route path="/badges" element={<Badges />} />
-        <Route path="/learn" element={<Learn />} />
-        <Route path="/tools" element={<Tools />} />
-        <Route path="/analytics" element={<Analytics />} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/tracker" element={<Tracker />} />
-        <Route path="/join-society" element={<JoinSociety />} />
-        <Route path="/create-society" element={<CreateSociety />} />
-        <Route path="/admin" element={<AdminDashboard />} />
-        <Route path="/superadmin" element={<SuperAdmin />} />
-        <Route path="/perks" element={<MyPerks />} />
-        <Route path="/my-society" element={<MySociety />} />
-        <Route path="/notifications" element={<Notifications />} />
-      </Routes>
-      </NotificationProvider>
+      <ThemeProvider>
+        <NotificationProvider>
+          <Routes>
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/auth" element={<Auth />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/chat" element={<Chat />} />
+          <Route path="/log" element={<Logger />} />
+          <Route path="/leaderboard" element={<Leaderboard />} />
+          <Route path="/badges" element={<Badges />} />
+          <Route path="/learn" element={<Learn />} />
+          <Route path="/tools" element={<Tools />} />
+          <Route path="/analytics" element={<Analytics />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/tracker" element={<Tracker />} />
+          <Route path="/join-society" element={<JoinSociety />} />
+          <Route path="/create-society" element={<CreateSociety />} />
+          <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/superadmin" element={<SuperAdmin />} />
+          <Route path="/perks" element={<MyPerks />} />
+          <Route path="/my-society" element={<MySociety />} />
+          <Route path="/notifications" element={<Notifications />} />
+        </Routes>
+        </NotificationProvider>
+      </ThemeProvider>
     </Router>
   );
 }

@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap');
 
 @theme {
   --color-primary: #22c55e;
@@ -19,6 +20,7 @@
 }
 
 :root {
+  /* Default to dark theme values (since that's the current look) */
   --color-primary: #22c55e;
   --color-primary-dark: #16a34a;
   --color-primary-muted: rgba(34, 197, 94, 0.15);
@@ -34,9 +36,56 @@
   --color-success: #22c55e;
   --color-warning: #f59e0b;
   --color-danger: #ef4444;
+  
+  --transition-theme: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
 }
 
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap');
+:root.light {
+  --color-bg: #f9fafb;
+  --color-surface: #ffffff;
+  --color-surface-light: #f3f4f6;
+  --color-border: rgba(0, 0, 0, 0.08);
+  --color-border-hover: rgba(0, 0, 0, 0.15);
+  --color-text-primary: #111827;
+  --color-text-secondary: #4b5563;
+  --color-text-muted: #6b7280;
+  --color-primary-muted: rgba(34, 197, 94, 0.1);
+}
+
+/* Light mode text visibility overrides */
+:root.light body {
+  color: var(--color-text-primary);
+}
+
+:root.light h1, :root.light h2, :root.light h3, :root.light h4, :root.light .text-white {
+  color: var(--color-text-primary);
+}
+
+/* Keep text white on primary buttons and badges */
+:root.light button[style*="background: linear-gradient"], 
+:root.light .bg-primary, 
+:root.light .text-white-force {
+  color: #ffffff !important;
+}
+
+:root.light .text-secondary-muted {
+  color: var(--color-text-secondary);
+}
+
+:root.light .text-muted-alt {
+  color: var(--color-text-muted);
+}
+
+:root.dark {
+  --color-bg: #0a0a0a;
+  --color-surface: #111111;
+  --color-surface-light: #1a1a1a;
+  --color-border: rgba(255, 255, 255, 0.08);
+  --color-border-hover: rgba(255, 255, 255, 0.15);
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #9ca3af;
+  --color-text-muted: #6b7280;
+}
 
 body {
   background-color: var(--color-bg);
@@ -44,9 +93,30 @@ body {
   font-family: 'Poppins', Inter, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition: var(--transition-theme);
+  font-size: 16px; /* Increased from default */
 }
 
-/* Custom scrollbar for dark theme */
+@media (max-width: 640px) {
+  body {
+    font-size: 15px; /* Slightly smaller but still readable on mobile */
+  }
+}
+
+/* Global Mobile Spacing Adjustments */
+.mobile-px {
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .mobile-px {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
+
+/* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
 }
@@ -54,9 +124,9 @@ body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--color-border-hover);
   border-radius: 10px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--color-text-muted);
 }

@@ -7,6 +7,7 @@ import { sendChatMessage } from "../lib/gemini.js";
 import TopNav from "../components/TopNav";
 import { articles } from "../data/articles";
 import { useNotifications } from "../hooks/useNotifications";
+import { useBin } from "../hooks/useBin";
 
 export default function Dashboard() {
   const [user, setUser] = useState(null);
@@ -15,6 +16,8 @@ export default function Dashboard() {
   const [readArticles, setReadArticles] = useState([]);
   const navigate = useNavigate();
   const { unreadCount } = useNotifications();
+  const { logs: bins, loading: binsLoading } = useBin();
+  const activeBin = bins?.find(b => b.status === "filling");
 
   useEffect(() => {
     const saved = JSON.parse(localStorage.getItem('readArticles') || '[]');
@@ -58,7 +61,13 @@ export default function Dashboard() {
       try {
         const docSnap = await getDoc(doc(db, "users", firebaseUser.uid));
         if (docSnap.exists()) {
-          setUserData(docSnap.data());
+          const data = docSnap.data();
+          const isGodMode = data.email === 'archiettanwar71@gmail.com';
+          if (data.role === 'super_admin' && !isGodMode) {
+            navigate("/superadmin");
+            return;
+          }
+          setUserData(data);
         }
       } catch (error) {
         console.error("Error fetching user data:", error);
@@ -133,25 +142,25 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#0a0a0a' }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--color-bg)' }}>
         <div className="font-bold animate-pulse text-xl tracking-widest uppercase" style={{ color: '#22c55e' }}>Loading Dashboard...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#0a0a0a' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--color-bg)' }}>
       <TopNav />
 
       {/* Main Content */}
       <div className="pt-28 px-6 lg:px-8 pb-10 min-h-screen max-w-7xl mx-auto w-full">
         {/* Top Bar */}
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end mb-10 pb-8 gap-6" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end mb-10 pb-8 gap-6" style={{ borderBottom: '1px solid var(--color-border)' }}>
           <div>
-            <h1 className="text-4xl font-bold text-white tracking-tight">
+            <h1 className="text-4xl font-bold tracking-tight" style={{ color: 'var(--color-text-primary)' }}>
               {getGreetingIST()}, {user?.displayName?.split(' ')[0] || userData?.name?.split(' ')[0] || "Composter"} 👋
             </h1>
-            <p className="mt-2 uppercase text-xs tracking-widest font-semibold" style={{ color: '#6b7280' }}>{getDateString()}</p>
+            <p className="mt-2 uppercase text-xs tracking-widest font-semibold" style={{ color: 'var(--color-text-muted)' }}>{getDateString()}</p>
           </div>
           
           {/* Top Eco Tip */}
@@ -181,7 +190,7 @@ export default function Dashboard() {
             </div>
             
             <div className="relative z-10 text-center md:text-left">
-              <h2 className="text-xl font-bold text-white tracking-tight mb-2">Unlock Society Features 🏢</h2>
+              <h2 className="text-xl font-bold tracking-tight mb-2" style={{ color: '#ffffff' }}>Unlock Society Features 🏢</h2>
               <p className="text-xs font-semibold uppercase tracking-widest leading-relaxed max-w-lg" style={{ color: '#9ca3af' }}>
                 You haven't joined a society yet. Join now to unlock building leaderboard 🏆 and maintenance discounts! 💰
               </p>
@@ -200,35 +209,35 @@ export default function Dashboard() {
         {/* Stats Row */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
           {/* XP Card */}
-          <div className="rounded-xl p-6 hover:scale-[1.02] transition-transform duration-300 group" style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+          <div className="rounded-xl p-6 hover:scale-[1.02] transition-transform duration-300 group" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
             <p className="text-[10px] font-bold uppercase tracking-widest mb-3" style={{ color: '#6b7280' }}>Total Growth</p>
             <div className="flex items-baseline gap-2">
-              <p className="text-4xl font-bold text-white tracking-tight group-hover:text-[#22c55e] transition-colors">{userData?.xp ?? 0}</p>
+              <p className="text-4xl font-bold tracking-tight" style={{ color: 'var(--color-text-primary)' }}>{userData?.xp ?? 0}</p>
               <p className="text-sm font-semibold uppercase" style={{ color: '#6b7280' }}>XP</p>
             </div>
           </div>
 
           {/* Level Card */}
-          <div className="rounded-xl p-6 hover:scale-[1.02] transition-transform duration-300" style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+          <div className="rounded-xl p-6 hover:scale-[1.02] transition-transform duration-300" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
             <p className="text-[10px] font-bold uppercase tracking-widest mb-3" style={{ color: '#6b7280' }}>Ranking</p>
-            <p className="text-4xl font-bold text-white tracking-tight">Level {userData?.level ?? 1}</p>
+            <p className="text-4xl font-bold tracking-tight" style={{ color: 'var(--color-text-primary)' }}>Level {userData?.level ?? 1}</p>
             <p className="text-xs font-bold mt-2 uppercase tracking-wider" style={{ color: '#22c55e' }}>Seedling 🌱</p>
           </div>
 
           {/* Streak Card */}
-          <div className="rounded-xl p-6 hover:scale-[1.02] transition-transform duration-300" style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+          <div className="rounded-xl p-6 hover:scale-[1.02] transition-transform duration-300" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
             <p className="text-[10px] font-bold uppercase tracking-widest mb-3" style={{ color: '#6b7280' }}>Persistence</p>
             <div className="flex items-center gap-3">
-              <p className="text-4xl font-bold text-white tracking-tight">{userData?.streak ?? 0} Days</p>
+              <p className="text-4xl font-bold tracking-tight" style={{ color: 'var(--color-text-primary)' }}>{userData?.streak ?? 0} Days</p>
               <span className="text-2xl animate-bounce">🔥</span>
             </div>
           </div>
 
           {/* Waste Diverted Card */}
-          <div className="rounded-xl p-6 hover:scale-[1.02] transition-transform duration-300" style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+          <div className="rounded-xl p-6 hover:scale-[1.02] transition-transform duration-300" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
             <p className="text-[10px] font-bold uppercase tracking-widest mb-3" style={{ color: '#6b7280' }}>Impact</p>
             <div className="flex items-baseline gap-2">
-              <p className="text-4xl font-bold text-white tracking-tight">{userData?.totalWasteKg ?? 0}</p>
+              <p className="text-4xl font-bold tracking-tight" style={{ color: 'var(--color-text-primary)' }}>{userData?.totalWasteKg ?? 0}</p>
               <p className="text-sm font-semibold uppercase" style={{ color: '#6b7280' }}>KG</p>
             </div>
           </div>
@@ -237,12 +246,12 @@ export default function Dashboard() {
         {/* Two Column Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-8">
-            <div className="rounded-xl p-8 relative overflow-hidden" style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
-              <h2 className="text-xl font-bold text-white tracking-tight mb-8">Cycle Maturity Tracking</h2>
-              <div className="flex flex-col items-center justify-center py-10 rounded-xl" style={{ backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
+            <div className="rounded-xl p-8 relative overflow-hidden" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
+              <h2 className="text-xl font-bold tracking-tight mb-8" style={{ color: 'var(--color-text-primary)' }}>Cycle Maturity Tracking</h2>
+              <div className="flex flex-col items-center justify-center py-10 rounded-xl" style={{ backgroundColor: 'var(--color-bg)', border: '1px solid var(--color-border)', opacity: 0.8 }}>
                 <div className="relative w-48 h-48 mb-8">
                   <svg className="w-full h-full transform -rotate-90" viewBox="0 0 120 120">
-                    <circle cx="60" cy="60" r="54" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="10" />
+                    <circle cx="60" cy="60" r="54" fill="none" stroke="var(--color-border)" strokeWidth="10" />
                     <circle
                       cx="60"
                       cy="60"
@@ -250,31 +259,39 @@ export default function Dashboard() {
                       fill="none"
                       stroke="#22c55e"
                       strokeWidth="10"
-                      strokeDasharray="0 345"
+                      strokeDasharray={`${(activeBin?.maturityProgress || 0) * 3.4} 345`}
                       strokeLinecap="round"
+                      style={{ transition: 'stroke-dasharray 1s ease-out' }}
                     />
                     <text x="60" y="68" textAnchor="middle" fontSize="28" fontWeight="bold" fill="#22c55e" className="transform rotate-90 origin-center translate-y-[2px]">
-                      0%
+                      {Math.round(activeBin?.maturityProgress || 0)}%
                     </text>
                   </svg>
                 </div>
-                <p className="text-lg font-bold text-white mb-2">Initialize Your Cycle</p>
-                <p className="font-semibold mb-8 text-center max-w-sm text-sm" style={{ color: '#6b7280' }}>Set up your first composting bin to start tracking maturity and diverting waste.</p>
+                <p className="text-lg font-bold mb-2" style={{ color: 'var(--color-text-primary)' }}>
+                  {activeBin ? activeBin.name : "Initialize Your Cycle"}
+                </p>
+                <p className="font-semibold mb-8 text-center max-w-sm text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+                  {activeBin 
+                    ? `Your bin is currently ${Math.round(activeBin.maturityProgress)}% through its maturity phase.` 
+                    : "Set up your first composting bin to start tracking maturity and diverting waste."}
+                </p>
                 <button
-                  className="px-10 py-4 rounded-xl font-bold text-white hover:scale-105 transition-all duration-300 uppercase text-xs tracking-widest cursor-pointer"
-                  style={{ background: 'linear-gradient(to bottom, #22c55e, #16a34a)', boxShadow: '0 8px 32px rgba(34,197,94,0.25)' }}
+                  onClick={() => navigate(activeBin ? '/tracker' : '/log')}
+                  className="px-10 py-4 rounded-xl font-bold hover:scale-105 transition-all duration-300 uppercase text-xs tracking-widest cursor-pointer"
+                  style={{ background: 'linear-gradient(to bottom, #22c55e, #16a34a)', color: '#ffffff', boxShadow: '0 8px 32px rgba(34,197,94,0.25)' }}
                 >
-                  Configure Bin Profile
+                  {activeBin ? "View Details" : "Configure Bin Profile"}
                 </button>
               </div>
             </div>
 
-            <div className="rounded-xl p-8" style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
-              <h2 className="text-xl font-bold text-white tracking-tight mb-8">Recent Waste Logs</h2>
-              <div className="flex flex-col items-center justify-center py-16 rounded-xl" style={{ border: '1px dashed rgba(255,255,255,0.1)' }}>
+            <div className="rounded-xl p-8" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
+              <h2 className="text-xl font-bold tracking-tight mb-8" style={{ color: 'var(--color-text-primary)' }}>Recent Waste Logs</h2>
+              <div className="flex flex-col items-center justify-center py-16 rounded-xl" style={{ border: '1px dashed var(--color-border)' }}>
                  <div className="text-5xl mb-4 opacity-20">🍃</div>
-                <p className="font-bold text-center uppercase tracking-widest text-xs" style={{ color: '#6b7280' }}>Awaiting first log...</p>
-                <p className="text-[10px] font-semibold text-center mt-2 uppercase tracking-widest" style={{ color: '#4b5563' }}>
+                <p className="font-bold text-center uppercase tracking-widest text-xs" style={{ color: 'var(--color-text-muted)' }}>Awaiting first log...</p>
+                <p className="text-[10px] font-semibold text-center mt-2 uppercase tracking-widest" style={{ color: 'var(--color-text-muted)' }}>
                   Start logging your waste to build your compost matrix
                 </p>
               </div>
@@ -282,13 +299,13 @@ export default function Dashboard() {
           </div>
 
           <div className="space-y-8">
-            <div className="rounded-xl p-6" style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
-              <h2 className="text-[10px] font-bold uppercase tracking-[0.2em] mb-6" style={{ color: '#6b7280' }}>Control Center</h2>
+            <div className="rounded-xl p-6" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
+              <h2 className="text-[10px] font-bold uppercase tracking-[0.2em] mb-6" style={{ color: 'var(--color-text-muted)' }}>Control Center</h2>
               <div className="space-y-3">
                 <button
                   onClick={() => navigate('/log')}
-                  className="w-full py-4 px-5 rounded-xl font-bold text-white hover:scale-[1.02] transition-all duration-300 flex items-center justify-between group cursor-pointer"
-                  style={{ background: 'linear-gradient(to bottom, #22c55e, #16a34a)', boxShadow: '0 4px 24px rgba(34,197,94,0.2)' }}
+                  className="w-full py-4 px-5 rounded-xl font-bold hover:scale-[1.02] transition-all duration-300 flex items-center justify-between group cursor-pointer"
+                  style={{ background: 'linear-gradient(to bottom, #22c55e, #16a34a)', color: '#ffffff', boxShadow: '0 4px 24px rgba(34,197,94,0.2)' }}
                 >
                   <span className="uppercase text-xs tracking-widest">Log Waste Batch</span>
                   <span className="text-xl group-hover:rotate-12 transition-transform">📝</span>
@@ -303,7 +320,7 @@ export default function Dashboard() {
                 </button>
                 <button
                   className="w-full py-4 px-5 rounded-xl font-bold transition-all duration-300 flex items-center justify-between cursor-pointer"
-                  style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: '#9ca3af' }}
+                  style={{ backgroundColor: 'var(--color-bg)', border: '1px solid var(--color-border)', color: 'var(--color-text-muted)' }}
                 >
                   <span className="uppercase text-xs tracking-widest">Vision Analysis</span>
                   <span className="text-xl">📸</span>
@@ -311,24 +328,24 @@ export default function Dashboard() {
               </div>
             </div>
 
-            <div className="rounded-xl p-6 text-center relative overflow-hidden" style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+            <div className="rounded-xl p-6 text-center relative overflow-hidden" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
                <div className="absolute top-0 left-0 w-full h-0.5" style={{ background: 'linear-gradient(to right, #22c55e, #f59e0b)', opacity: 0.3 }}></div>
-              <h2 className="text-[10px] font-bold uppercase tracking-[0.2em] mb-6" style={{ color: '#6b7280' }}>C:N Matrix</h2>
-              <div className="flex flex-col items-center justify-center py-10 rounded-xl" style={{ backgroundColor: 'rgba(255,255,255,0.02)' }}>
-                <p className="text-6xl font-bold mb-4" style={{ color: 'rgba(255,255,255,0.1)' }}>—</p>
-                <p className="text-[10px] font-bold uppercase tracking-widest max-w-[140px] leading-relaxed" style={{ color: '#6b7280' }}>Insufficient data for ratio projection</p>
+              <h2 className="text-[10px] font-bold uppercase tracking-[0.2em] mb-6" style={{ color: 'var(--color-text-muted)' }}>C:N Matrix</h2>
+              <div className="flex flex-col items-center justify-center py-10 rounded-xl" style={{ backgroundColor: 'var(--color-bg)' }}>
+                <p className="text-6xl font-bold mb-4" style={{ color: 'var(--color-border)' }}>—</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest max-w-[140px] leading-relaxed" style={{ color: 'var(--color-text-muted)' }}>Insufficient data for ratio projection</p>
               </div>
             </div>
 
             {/* Keep Learning Widget */}
-            <div className="rounded-xl p-6 relative overflow-hidden" style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
-               <h2 className="text-[10px] font-bold uppercase tracking-[0.2em] mb-6" style={{ color: '#6b7280' }}>📚 Keep Learning</h2>
+            <div className="rounded-xl p-6 relative overflow-hidden" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
+               <h2 className="text-[10px] font-bold uppercase tracking-[0.2em] mb-6" style={{ color: 'var(--color-text-muted)' }}>📚 Keep Learning</h2>
                <div className="space-y-3">
                  {articles.filter(a => !readArticles.includes(a.id)).slice(0, 2).length > 0 ? (
                    articles.filter(a => !readArticles.includes(a.id)).slice(0, 2).map((article) => (
-                     <div key={article.id} className="p-4 rounded-xl group transition-all" style={{ backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                     <div key={article.id} className="p-4 rounded-xl group transition-all" style={{ backgroundColor: 'var(--color-bg)', border: '1px solid var(--color-border)' }}>
                        <p className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: '#f59e0b' }}>{article.topic}</p>
-                       <h4 className="text-xs font-bold text-white leading-tight mb-2 group-hover:text-[#22c55e] transition-colors">{article.title}</h4>
+                       <h4 className="text-xs font-bold leading-tight mb-2 group-hover:text-[#22c55e] transition-colors" style={{ color: 'var(--color-text-primary)' }}>{article.title}</h4>
                        <button 
                          onClick={() => navigate('/learn')} 
                          className="text-[10px] font-bold uppercase tracking-widest hover:underline cursor-pointer"
@@ -340,8 +357,8 @@ export default function Dashboard() {
                    ))
                  ) : (
                    <div className="py-6 text-center">
-                     <p className="text-xs font-bold uppercase tracking-widest" style={{ color: '#6b7280' }}>🎉 You've read all articles!</p>
-                     <p className="text-[8px] uppercase mt-1" style={{ color: '#4b5563' }}>Check back soon for more guides.</p>
+                     <p className="text-xs font-bold uppercase tracking-widest" style={{ color: 'var(--color-text-muted)' }}>🎉 You've read all articles!</p>
+                     <p className="text-[8px] uppercase mt-1" style={{ color: 'var(--color-text-muted)' }}>Check back soon for more guides.</p>
                    </div>
                  )}
                </div>
@@ -358,7 +375,7 @@ export default function Dashboard() {
         className={`fixed bottom-[110px] right-8 z-50 w-[380px] h-[500px] rounded-2xl flex flex-col transition-all duration-300 origin-bottom-right ${
           isChatOpen ? 'scale-100 opacity-100 translate-y-0' : 'scale-75 opacity-0 translate-y-10 pointer-events-none'
         }`}
-        style={{ backgroundColor: '#111111', border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 25px 50px rgba(0,0,0,0.5)' }}
+        style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', boxShadow: '0 25px 50px rgba(0,0,0,0.5)' }}
       >
         {/* Header */}
         <div className="rounded-t-2xl p-4 flex flex-col justify-center shrink-0" style={{ background: 'linear-gradient(to right, #16a34a, #22c55e)' }}>
@@ -367,23 +384,23 @@ export default function Dashboard() {
         </div>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4" style={{ backgroundColor: '#0a0a0a' }}>
+        <div className="flex-1 overflow-y-auto p-4 space-y-4" style={{ backgroundColor: 'var(--color-bg)' }}>
           {messages.map((msg, index) => (
             <div key={index} className={`flex flex-col ${msg.sender === "user" ? "items-end" : "items-start"}`}>
               <div
                 className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm font-medium leading-relaxed ${
                   msg.sender === "user"
                     ? "text-white rounded-tr-none"
-                    : "text-[#9ca3af] rounded-tl-none"
+                    : "text-inherit rounded-tl-none"
                 }`}
                 style={msg.sender === "user" 
                   ? { background: 'linear-gradient(to bottom, #22c55e, #16a34a)' }
-                  : { backgroundColor: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)' }
+                  : { backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }
                 }
               >
                 {msg.text}
               </div>
-              <span className="text-[10px] font-semibold uppercase mt-1 px-1" style={{ color: '#4b5563' }}>
+              <span className="text-[10px] font-semibold uppercase mt-1 px-1" style={{ color: 'var(--color-text-muted)' }}>
                 {msg.timestamp}
               </span>
             </div>
@@ -399,15 +416,15 @@ export default function Dashboard() {
         </div>
 
         {/* Input Bar */}
-        <div className="p-4" style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+        <div className="p-4" style={{ borderTop: '1px solid var(--color-border)' }}>
           <form onSubmit={handleChatSend} className="flex gap-2">
             <input
               type="text"
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
               placeholder="Ask a question..."
-              className="flex-1 rounded-full px-5 py-2.5 text-xs font-semibold text-white focus:outline-none transition-all"
-              style={{ backgroundColor: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
+              className="flex-1 rounded-full px-5 py-2.5 text-xs font-semibold focus:outline-none transition-all"
+              style={{ backgroundColor: 'var(--color-bg)', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }}
               disabled={isChatLoading}
             />
             <button

@@ -64,25 +64,25 @@ const MyPerks = () => {
                             <span className="text-9xl grayscale">💰</span>
                         </div>
                         
-                        <div className="relative z-10 flex flex-col md:flex-row items-center gap-12">
-                            <div className="text-center md:text-left p-8 rounded-2xl" style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)' }}>
-                                <p className="text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color: '#22c55e' }}>Maintenance Benefit</p>
-                                <div className="flex items-baseline gap-2">
-                                    <span className="text-7xl font-bold text-white tracking-tighter">{discount}</span>
-                                    <span className="text-3xl font-bold text-white">%</span>
+                        <div className="relative z-10 flex flex-col md:flex-row items-center gap-8 md:gap-12">
+                            <div className="text-center md:text-left p-6 md:p-8 rounded-2xl w-full md:w-auto" style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)' }}>
+                                <p className="text-[11px] font-bold uppercase tracking-widest mb-2" style={{ color: '#22c55e' }}>Maintenance Benefit</p>
+                                <div className="flex items-baseline justify-center md:justify-start gap-2">
+                                    <span className="text-6xl md:text-7xl font-bold text-white tracking-tighter">{discount}</span>
+                                    <span className="text-2xl md:text-3xl font-bold text-white">%</span>
                                 </div>
                             </div>
 
                             <div className="text-center md:text-left flex-1">
                                 <h2 className="text-2xl font-bold text-white tracking-tight mb-4 uppercase">Maintenance Discount</h2>
                                 {discount > 0 ? (
-                                    <div className="p-6 rounded-xl border" style={{ backgroundColor: 'rgba(255,255,255,0.03)', borderColor: 'rgba(255,255,255,0.08)' }}>
-                                        <p className="text-gray-400 text-sm font-semibold italic leading-relaxed">
+                                    <div className="p-5 md:p-6 rounded-xl border" style={{ backgroundColor: 'rgba(255,255,255,0.03)', borderColor: 'rgba(255,255,255,0.08)' }}>
+                                        <p className="text-gray-400 text-xs md:text-sm font-semibold italic leading-relaxed">
                                             "{userData.discountNote || "Excellent composting consistency!"}"
                                         </p>
                                     </div>
                                 ) : (
-                                    <p className="font-bold uppercase tracking-widest text-[10px] leading-relaxed max-w-sm opacity-60" style={{ color: '#6b7280' }}>
+                                    <p className="font-bold uppercase tracking-widest text-[11px] leading-relaxed max-w-sm opacity-60" style={{ color: '#6b7280' }}>
                                         Start logging waste to unlock building-wide discounts set by your building secretary.
                                     </p>
                                 )}
@@ -90,27 +90,27 @@ const MyPerks = () => {
                         </div>
 
                         {discount === 0 && (
-                            <button 
-                                onClick={() => navigate('/log')}
-                                className="relative z-10 px-10 py-5 rounded-xl font-bold text-[10px] uppercase tracking-widest hover:scale-105 active:scale-95 transition-all cursor-pointer"
-                                style={{ background: 'linear-gradient(to bottom, #22c55e, #16a34a)', color: 'white', boxShadow: '0 8px 32px rgba(34,197,94,0.3)' }}
-                            >
-                                Start Logging 🚀
-                            </button>
+                                <button 
+                                    onClick={() => navigate('/log')}
+                                    className="mt-6 w-full md:w-auto relative z-10 px-10 py-4 md:py-5 rounded-xl font-bold text-[11px] uppercase tracking-widest hover:scale-105 active:scale-95 transition-all cursor-pointer"
+                                    style={{ background: 'linear-gradient(to bottom, #22c55e, #16a34a)', color: 'white', boxShadow: '0 8px 32px rgba(34,197,94,0.3)' }}
+                                >
+                                    Start Logging 🚀
+                                </button>
                         )}
                     </div>
 
                     {/* Stats Row */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-8">
                         {[
                             { label: "Total Diverted", value: `${(userData?.totalWasteKg || 0).toFixed(1)}kg`, icon: "⚖️" },
                             { label: "XP Progress", value: userData?.xp || 0, icon: "✨" },
-                            { label: "Active Streak", value: `${userData?.streak || 0} Days`, icon: "🔥" }
+                            { label: "Active Streak", value: `${userData?.streak || 0} Days`, icon: "🔥", colSpan: "col-span-2 md:col-span-1" }
                         ].map((stat, i) => (
-                            <div key={i} className="p-8 rounded-xl transition-all group" style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
-                                <div className="text-2xl mb-4 grayscale group-hover:grayscale-0 transition-all">{stat.icon}</div>
-                                <p className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: '#6b7280' }}>{stat.label}</p>
-                                <p className="text-3xl font-bold text-white tracking-tight">{stat.value}</p>
+                            <div key={i} className={`p-6 md:p-8 rounded-xl transition-all group ${stat.colSpan || ''}`} style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                                <div className="text-xl md:text-2xl mb-4 grayscale group-hover:grayscale-0 transition-all">{stat.icon}</div>
+                                <p className="text-[11px] font-bold uppercase tracking-widest mb-1" style={{ color: '#6b7280' }}>{stat.label}</p>
+                                <p className="text-2xl md:text-3xl font-bold text-white tracking-tight">{stat.value}</p>
                             </div>
                         ))}
                     </div>

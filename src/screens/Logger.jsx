@@ -184,11 +184,11 @@ const Logger = () => {
   const feedback = getCNFeedback(cnRatio);
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#0a0a0a' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--color-bg)' }}>
       <TopNav />
       <div className="pt-28 px-6 lg:px-8 pb-10 min-h-screen max-w-7xl mx-auto w-full">
         <div className="mb-12">
-          <h1 className="text-3xl font-bold text-white tracking-tight">Log Your Impact 🚀</h1>
+          <h1 className="text-3xl font-bold tracking-tight" style={{ color: 'var(--color-text-primary)' }}>Log Your Impact 🚀</h1>
           <p className="mt-2 text-xs font-semibold uppercase tracking-widest leading-relaxed" style={{ color: '#6b7280' }}>
             Snap a photo to verify your waste and earn rewards
           </p>
@@ -200,7 +200,7 @@ const Logger = () => {
             <div className={`relative p-8 rounded-2xl border-2 border-dashed transition-all duration-500 flex flex-col items-center justify-center min-h-[400px] overflow-hidden ${
               image ? 'border-transparent' : 'border-white/10 bg-white/5 hover:bg-white/10 hover:border-[#22c55e]/30'
             }`}
-            style={image ? { backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' } : {}}
+            style={image ? { backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' } : {}}
             >
               {image ? (
                 <>
@@ -266,8 +266,8 @@ const Logger = () => {
           </div>
 
           {/* Right: Adjustments & Submit */}
-          <div className="p-10 rounded-2xl flex flex-col h-full" style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
-            <h2 className="text-xl font-bold text-white tracking-tight mb-8 uppercase text-xs tracking-widest" style={{ color: '#6b7280' }}>Verification & Weights</h2>
+          <div className="p-10 rounded-2xl flex flex-col h-full" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
+            <h2 className="text-xl font-bold tracking-tight mb-8 uppercase text-xs tracking-widest" style={{ color: '#6b7280' }}>Verification & Weights</h2>
             
             <div className="space-y-10 flex-1">
               {/* Bin Selection Input */}
@@ -339,7 +339,7 @@ const Logger = () => {
               <div className="flex items-center justify-between mb-8">
                 <div>
                   <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: '#6b7280' }}>Total Weight</p>
-                  <p className="text-3xl font-bold text-white tracking-tighter">{(greens + browns).toFixed(1)} KG</p>
+                  <p className="text-3xl font-bold tracking-tighter" style={{ color: 'var(--color-text-primary)' }}>{(greens + browns).toFixed(1)} KG</p>
                 </div>
                 <div className="text-right">
                   <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: '#6b7280' }}>XP Reward</p>
@@ -376,7 +376,7 @@ const Logger = () => {
 
           {/* New Right Column: Active Bin Summary & Tips */}
           <div className="space-y-8">
-            <div className="p-10 rounded-2xl flex flex-col h-full" style={{ backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
+            <div className="p-10 rounded-2xl flex flex-col h-full" style={{ backgroundColor: 'var(--color-surface-light)', border: '1px solid var(--color-border)' }}>
               <h2 className="text-xl font-bold text-white tracking-tight mb-8 uppercase text-xs tracking-widest" style={{ color: '#6b7280' }}>
                 {selectedBinId === 'new' ? 'Pro Tips' : 'Bin Status Breakdown'}
               </h2>

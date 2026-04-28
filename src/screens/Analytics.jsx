@@ -109,14 +109,14 @@ const Analytics = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#0a0a0a' }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--color-bg)' }}>
         <div className="font-bold animate-pulse text-xl tracking-widest uppercase text-[#22c55e]">Generating Insights...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#0a0a0a' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--color-bg)' }}>
       <TopNav />
       <div className="pt-28 px-6 lg:px-8 pb-10 min-h-screen max-w-7xl mx-auto w-full">
         {/* Top Bar */}
@@ -153,7 +153,7 @@ const Analytics = () => {
                     { label: "Total Batches", value: stats.totalLogs, icon: "📦" },
                     { label: "Persistence", value: `${userData?.streak || 0} Days`, icon: "🔥" }
                 ].map((s, i) => (
-                    <div key={i} className="p-6 rounded-xl transition-all group" style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                    <div key={i} className="p-6 rounded-xl transition-all group" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
                         <div className="flex items-center justify-between mb-4">
                             <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: '#6b7280' }}>{s.label}</span>
                             <span className="text-xl grayscale group-hover:grayscale-0 transition-all">{s.icon}</span>
@@ -166,7 +166,7 @@ const Analytics = () => {
             {/* Charts Row */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* Weekly Waste Bar Chart */}
-                <div className="p-8 rounded-2xl" style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                <div className="p-8 rounded-2xl" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
                     <h3 className="text-xs font-bold text-white uppercase tracking-widest mb-10 flex items-center gap-2">
                         <span className="w-2 h-2 rounded-full" style={{ backgroundColor: '#22c55e' }}></span> Progress Trends
                     </h3>
@@ -203,7 +203,7 @@ const Analytics = () => {
                 </div>
 
                 {/* C:N Ratio Line Chart (SVG) */}
-                <div className="p-8 rounded-2xl" style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                <div className="p-8 rounded-2xl" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}  >
                     <h3 className="text-xs font-bold text-white uppercase tracking-widest mb-10 flex items-center gap-2">
                         <span className="w-2 h-2 rounded-full" style={{ backgroundColor: '#f59e0b' }}></span> C:N Ratio Stability
                     </h3>
